@@ -1,0 +1,412 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="210mm"
+   height="297mm"
+   viewBox="0 0 209.99736 296.99625"
+   version="1.1"
+   id="svg4518"
+   inkscape:version="0.92.2 (5c3e80d, 2017-08-06)"
+   sodipodi:docname="maptileset.svg"
+   inkscape:export-filename="D:\godot3.1\sumer\art\world\maptileset.png"
+   inkscape:export-xdpi="96"
+   inkscape:export-ydpi="96"
+   shape-rendering="crispEdges">
+  <defs
+     id="defs4512" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="2"
+     inkscape:cx="-244.48724"
+     inkscape:cy="1020.9253"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="true"
+     showborder="false"
+     inkscape:window-width="2560"
+     inkscape:window-height="1411"
+     inkscape:window-x="2551"
+     inkscape:window-y="-9"
+     inkscape:window-maximized="1"
+     inkscape:snap-nodes="true"
+     showguides="false"
+     inkscape:snap-global="true">
+    <inkscape:grid
+       type="axonomgrid"
+       id="grid5063"
+       units="px"
+       empspacing="4"
+       spacingy="2.11664"
+       gridanglex="26.56"
+       gridanglez="26.56" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata4515">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <path
+       style="fill:#666666;stroke:none;stroke-width:0.52916682px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 117.43214,131.30468 c 0,0 22.91359,13.22917 22.91359,13.22917 0,0 22.91359,-13.22917 22.91359,-13.22917 l -22.91359,-13.22917 -22.91359,13.22917"
+       id="path5244"
+       inkscape:connector-curvature="0"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96" />
+    <path
+       style="fill:#c8beb7;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 134.61734,139.90364 22.91358,-13.22917 5.7284,3.30729 -22.91359,13.22917 z"
+       id="path5287"
+       inkscape:connector-curvature="0"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96"
+       clip-path="none" />
+    <path
+       style="fill:#ac9d93;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 134.61734,139.90364 v 1.32292 l 5.72839,3.30729 v -1.32292 z"
+       id="path5289"
+       inkscape:connector-curvature="0"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96"
+       clip-path="none" />
+    <path
+       style="fill:#ac9d93;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 140.34573,143.21093 v 1.32292 l 22.91359,-13.22917 v -1.32292 l -22.91359,13.22917"
+       id="path5291"
+       inkscape:connector-curvature="0"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96"
+       clip-path="none" />
+    <path
+       style="fill:#000080;fill-opacity:1;stroke:none;stroke-width:0.18200558px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m -152.43541,-7.7999101 -8.46469,4.2332797 -8.46469,-4.2332797 8.46469,-4.2332799"
+       id="path5244-5"
+       inkscape:connector-curvature="0"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96"
+       sodipodi:nodetypes="cccc"
+       inkscape:export-filename="D:\godot3.1\sumer\art\world\maptileset.png" />
+    <path
+       style="fill:#666666;stroke:none;stroke-width:0.52916682px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 108.35828,129.98176 c 0,0 -22.913589,13.22917 -22.913589,13.22917 0,0 -22.91359,-13.22917 -22.91359,-13.22917 l 22.91359,-13.22917 22.913589,13.22917"
+       id="path5244-6"
+       inkscape:connector-curvature="0"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96" />
+    <path
+       style="fill:#c8beb7;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 96.901486,128.65885 5.728394,-3.3073 5.7284,3.3073 -5.7284,3.30729 z"
+       id="path5427"
+       inkscape:connector-curvature="0"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96" />
+    <path
+       style="fill:#ac9d93;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 96.901486,129.98176 v -1.32291 l 5.728394,3.30729 v 1.32291 z"
+       id="path5429"
+       inkscape:connector-curvature="0"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96" />
+    <path
+       style="fill:#ac9d93;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 102.62988,131.96614 v 1.32291 l 5.7284,-3.30729 v -1.32291 z"
+       id="path5431"
+       inkscape:connector-curvature="0"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96" />
+    <path
+       style="fill:#c8beb7;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 117.43214,129.98176 17.18519,9.92188 5.7284,-3.30729 -17.18519,-9.92188 -5.7284,3.30729"
+       id="path5441"
+       inkscape:connector-curvature="0"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96" />
+    <path
+       style="fill:#ac9d93;stroke:none;stroke-width:0.26458332px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m 117.43214,129.98176 v 1.32292 l 17.18519,9.92187 v -1.32291 l -17.18519,-9.92188"
+       id="path5443"
+       inkscape:connector-curvature="0"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96" />
+    <path
+       style="opacity:1;fill:#d4aa00;fill-opacity:1;stroke:none;stroke-width:0.3969731"
+       d="m -169.36666,-7.7999101 8.46656,4.23328 v 2.11664 l -8.46656,-4.23328 z"
+       id="rect5264-1-9"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ccccc"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96"
+       inkscape:export-filename="D:\godot3.1\sumer\art\world\maptileset.png" />
+    <path
+       style="opacity:1;fill:#d4aa00;fill-opacity:1;stroke:none;stroke-width:0.3969731"
+       d="m -160.9001,-3.5666301 8.46656,-4.23328 v 2.11664 l -8.46656,4.23328 z"
+       id="rect5264-1-9-2"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ccccc"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96"
+       inkscape:export-filename="D:\godot3.1\sumer\art\world\maptileset.png" />
+    <path
+       style="fill:#0000ff;fill-opacity:1;stroke:none;stroke-width:0.1820056px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m -131.26434,-7.7999101 -8.46469,4.2332797 -8.46469,-4.2332797 8.46469,-4.2332799"
+       id="path5244-5-32"
+       inkscape:connector-curvature="0"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96"
+       sodipodi:nodetypes="cccc"
+       inkscape:export-filename="D:\godot3.1\sumer\art\world\maptileset.png" />
+    <path
+       style="opacity:1;fill:#d4aa00;fill-opacity:1;stroke:none;stroke-width:0.3969731"
+       d="m -148.19559,-7.7999101 8.46656,4.23328 v 2.1166397 l -8.46656,-4.2332797 z"
+       id="rect5264-1-9-6"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ccccc"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96"
+       inkscape:export-filename="D:\godot3.1\sumer\art\world\maptileset.png" />
+    <path
+       style="opacity:1;fill:#d4aa00;fill-opacity:1;stroke:none;stroke-width:0.3969731"
+       d="m -139.72903,-3.5666301 8.46656,-4.23328 v 2.11664 l -8.46656,4.2332797 z"
+       id="rect5264-1-9-2-8"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ccccc"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96"
+       inkscape:export-filename="D:\godot3.1\sumer\art\world\maptileset.png" />
+    <path
+       style="fill:#8080ff;fill-opacity:1;stroke:none;stroke-width:0.1820056px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m -110.09141,-7.7999101 -8.46469,4.2332797 -8.46469,-4.2332797 8.46469,-4.2332799"
+       id="path5244-5-32-5"
+       inkscape:connector-curvature="0"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96"
+       sodipodi:nodetypes="cccc"
+       inkscape:export-filename="D:\godot3.1\sumer\art\world\maptileset.png" />
+    <path
+       style="opacity:1;fill:#d4aa00;fill-opacity:1;stroke:none;stroke-width:0.3969731"
+       d="m -127.02266,-7.7999101 8.46656,4.23328 v 2.11664 l -8.46656,-4.23328 z"
+       id="rect5264-1-9-6-1"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ccccc"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96"
+       inkscape:export-filename="D:\godot3.1\sumer\art\world\maptileset.png" />
+    <path
+       style="opacity:1;fill:#d4aa00;fill-opacity:1;stroke:none;stroke-width:0.3969731"
+       d="m -118.5561,-3.5666301 8.46656,-4.23328 v 2.11664 l -8.46656,4.23328 z"
+       id="rect5264-1-9-2-8-9"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ccccc"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96"
+       inkscape:export-filename="D:\godot3.1\sumer\art\world\maptileset.png" />
+    <path
+       style="fill:#005522;fill-opacity:1;stroke:none;stroke-width:0.1820056px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m -152.43541,7.0165702 -8.46469,4.2332798 -8.46469,-4.2332798 8.46469,-4.23328"
+       id="path5244-5-5"
+       inkscape:connector-curvature="0"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96"
+       sodipodi:nodetypes="cccc"
+       inkscape:export-filename="D:\godot3.1\sumer\art\world\maptileset.png" />
+    <path
+       style="opacity:1;fill:#d4aa00;fill-opacity:1;stroke:none;stroke-width:0.3969731"
+       d="m -169.36666,7.0165702 8.46656,4.2332798 v 2.11664 l -8.46656,-4.2332801 z"
+       id="rect5264-1-9-60"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ccccc"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96"
+       inkscape:export-filename="D:\godot3.1\sumer\art\world\maptileset.png" />
+    <path
+       style="opacity:1;fill:#d4aa00;fill-opacity:1;stroke:none;stroke-width:0.3969731"
+       d="m -160.9001,11.24985 8.46656,-4.2332798 v 2.1166397 l -8.46656,4.2332801 z"
+       id="rect5264-1-9-2-9"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ccccc"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96"
+       inkscape:export-filename="D:\godot3.1\sumer\art\world\maptileset.png" />
+    <path
+       style="fill:#00d455;fill-opacity:1;stroke:none;stroke-width:0.1820056px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m -131.26435,7.0165702 -8.46468,4.2332798 -8.46469,-4.2332798 8.46469,-4.23328"
+       id="path5244-5-32-9"
+       inkscape:connector-curvature="0"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96"
+       sodipodi:nodetypes="cccc"
+       inkscape:export-filename="D:\godot3.1\sumer\art\world\maptileset.png" />
+    <path
+       style="opacity:1;fill:#d4aa00;fill-opacity:1;stroke:none;stroke-width:0.3969731"
+       d="m -148.19559,7.0165702 8.46656,4.2332798 v 2.11664 l -8.46656,-4.2332801 z"
+       id="rect5264-1-9-6-12"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ccccc"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96"
+       inkscape:export-filename="D:\godot3.1\sumer\art\world\maptileset.png" />
+    <path
+       style="opacity:1;fill:#d4aa00;fill-opacity:1;stroke:none;stroke-width:0.3969731"
+       d="m -139.72903,11.24985 8.46656,-4.2332798 v 2.1166397 l -8.46656,4.2332801 z"
+       id="rect5264-1-9-2-8-93"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ccccc"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96"
+       inkscape:export-filename="D:\godot3.1\sumer\art\world\maptileset.png" />
+    <path
+       style="fill:#c6e9af;fill-opacity:1;stroke:none;stroke-width:0.1820056px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m -110.09142,7.0165702 -8.46468,4.2332798 -8.46469,-4.2332798 8.46469,-4.23328"
+       id="path5244-5-32-5-0"
+       inkscape:connector-curvature="0"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96"
+       sodipodi:nodetypes="cccc"
+       inkscape:export-filename="D:\godot3.1\sumer\art\world\maptileset.png" />
+    <path
+       style="opacity:1;fill:#d4aa00;fill-opacity:1;stroke:none;stroke-width:0.3969731"
+       d="m -127.02266,7.0165702 8.46656,4.2332798 v 2.11664 l -8.46656,-4.2332801 z"
+       id="rect5264-1-9-6-1-8"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ccccc"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96"
+       inkscape:export-filename="D:\godot3.1\sumer\art\world\maptileset.png" />
+    <path
+       style="opacity:1;fill:#d4aa00;fill-opacity:1;stroke:none;stroke-width:0.3969731"
+       d="m -118.5561,11.24985 8.46656,-4.2332798 v 2.1166397 l -8.46656,4.2332801 z"
+       id="rect5264-1-9-2-8-9-1"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ccccc"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96"
+       inkscape:export-filename="D:\godot3.1\sumer\art\world\maptileset.png" />
+    <path
+       style="fill:#d4aa00;fill-opacity:1;stroke:none;stroke-width:0.1820056px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m -152.43354,21.83305 -8.46469,4.23328 -8.46469,-4.23328 8.46469,-4.23328"
+       id="path5244-5-57"
+       inkscape:connector-curvature="0"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96"
+       sodipodi:nodetypes="cccc"
+       inkscape:export-filename="D:\godot3.1\sumer\art\world\maptileset.png" />
+    <path
+       style="opacity:1;fill:#d4aa00;fill-opacity:1;stroke:none;stroke-width:0.3969731"
+       d="m -169.36479,21.83305 8.46656,4.23328 v 2.11664 l -8.46656,-4.23328 z"
+       id="rect5264-1-9-3"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ccccc"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96"
+       inkscape:export-filename="D:\godot3.1\sumer\art\world\maptileset.png" />
+    <path
+       style="opacity:1;fill:#d4aa00;fill-opacity:1;stroke:none;stroke-width:0.3969731"
+       d="m -160.89823,26.06633 8.46656,-4.23328 v 2.11664 l -8.46656,4.23328 z"
+       id="rect5264-1-9-2-1"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ccccc"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96"
+       inkscape:export-filename="D:\godot3.1\sumer\art\world\maptileset.png" />
+    <path
+       style="fill:#ffe680;fill-opacity:1;stroke:none;stroke-width:0.1820056px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m -131.26247,21.83305 -8.46469,4.23328 -8.46469,-4.23328 8.46469,-4.23328"
+       id="path5244-5-32-1"
+       inkscape:connector-curvature="0"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96"
+       sodipodi:nodetypes="cccc"
+       inkscape:export-filename="D:\godot3.1\sumer\art\world\maptileset.png" />
+    <path
+       style="opacity:1;fill:#d4aa00;fill-opacity:1;stroke:none;stroke-width:0.3969731"
+       d="m -148.19372,21.83305 8.46656,4.23328 v 2.11664 l -8.46656,-4.23328 z"
+       id="rect5264-1-9-6-8"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ccccc"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96"
+       inkscape:export-filename="D:\godot3.1\sumer\art\world\maptileset.png" />
+    <path
+       style="opacity:1;fill:#d4aa00;fill-opacity:1;stroke:none;stroke-width:0.3969731"
+       d="m -139.72716,26.06633 8.46656,-4.23328 v 2.11664 l -8.46656,4.23328 z"
+       id="rect5264-1-9-2-8-6"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ccccc"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96"
+       inkscape:export-filename="D:\godot3.1\sumer\art\world\maptileset.png" />
+    <path
+       style="fill:#ffeeaa;fill-opacity:1;stroke:none;stroke-width:0.1820056px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="m -110.08954,21.83305 -8.46469,4.23328 -8.46469,-4.23328 8.46469,-4.23328"
+       id="path5244-5-32-5-3"
+       inkscape:connector-curvature="0"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96"
+       sodipodi:nodetypes="cccc"
+       inkscape:export-filename="D:\godot3.1\sumer\art\world\maptileset.png" />
+    <path
+       style="opacity:1;fill:#d4aa00;fill-opacity:1;stroke:none;stroke-width:0.3969731"
+       d="m -127.02079,21.83305 8.46656,4.23328 v 2.11664 l -8.46656,-4.23328 z"
+       id="rect5264-1-9-6-1-6"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ccccc"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96"
+       inkscape:export-filename="D:\godot3.1\sumer\art\world\maptileset.png" />
+    <path
+       style="opacity:1;fill:#d4aa00;fill-opacity:1;stroke:none;stroke-width:0.3969731"
+       d="m -118.55423,26.06633 8.46656,-4.23328 v 2.11664 l -8.46656,4.23328 z"
+       id="rect5264-1-9-2-8-9-2"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ccccc"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96"
+       inkscape:export-filename="D:\godot3.1\sumer\art\world\maptileset.png" />
+    <g
+       id="g6107"
+       transform="translate(78.332943,-24.34136)"
+       inkscape:export-filename="D:\godot3.1\sumer\art\people\spritesheet.png"
+       inkscape:export-xdpi="96"
+       inkscape:export-ydpi="96">
+      <path
+         id="rect6003"
+         transform="scale(0.26458)"
+         d="m -568.125,50.519531 v 0.01172 a 8.0019053,3.8678487 0 0 1 0.002,-0.01172 z m 0,0.01172 v 15.988281 h 0.002 a 8.0019053,3.8678487 0 0 1 7.96289,-3.867187 8.0019053,3.8678487 0 0 1 8.03907,3.84375 V 50.519531 a 8.0019053,3.8678487 0 0 1 -7.99024,3.867188 8.0019053,3.8678487 0 0 1 -8.01367,-3.855469 z m 16.00391,15.964844 -8.00196,0.02344 h 8.00196 z"
+         style="opacity:1;fill:#666666;fill-opacity:1;stroke:none;stroke-width:1.28366327"
+         inkscape:connector-curvature="0" />
+      <path
+         id="path5986-7-2"
+         d="m -146.08032,17.599749 a 2.1171441,1.0233554 0 0 1 -2.11395,1.023355 2.1171441,1.0233554 0 0 1 -2.12033,-1.020265 2.1171441,1.0233554 0 0 1 2.10755,-1.026434 2.1171441,1.0233554 0 0 1 2.12669,1.017165 l -2.1171,0.0062 z"
+         style="opacity:1;fill:#666666;fill-opacity:1;stroke:none;stroke-width:0.1241424"
+         inkscape:connector-curvature="0" />
+      <path
+         id="path5986-7-2-5"
+         d="m -146.08032,13.366469 a 2.1171441,1.0233554 0 0 1 -2.11395,1.023355 2.1171441,1.0233554 0 0 1 -2.12033,-1.020265 2.1171441,1.0233554 0 0 1 2.10755,-1.026434 2.1171441,1.0233554 0 0 1 2.12669,1.017165 l -2.1171,0.0062 z"
+         style="opacity:1;fill:#808080;fill-opacity:1;stroke:none;stroke-width:0.1241424"
+         inkscape:connector-curvature="0" />
+    </g>
+  </g>
+</svg>

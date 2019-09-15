@@ -1,0 +1,40 @@
+[gd_scene load_steps=13 format=2]
+
+[ext_resource path="res://goap/goap_agent.tscn" type="PackedScene" id=1]
+[ext_resource path="res://goap/agents/civilian_goap.gd" type="Script" id=2]
+[ext_resource path="res://goap/actions/a_wander.tscn" type="PackedScene" id=3]
+[ext_resource path="res://goap/actions/a_approach_npc_talk.tscn" type="PackedScene" id=4]
+[ext_resource path="res://goap/actions/a_conversation.tscn" type="PackedScene" id=5]
+[ext_resource path="res://goap/actions/a_flee.tscn" type="PackedScene" id=6]
+[ext_resource path="res://goap/actions/a_move_normal.tscn" type="PackedScene" id=7]
+[ext_resource path="res://goap/actions/a_move_flee.tscn" type="PackedScene" id=8]
+[ext_resource path="res://goap/goals/g_hangout.tscn" type="PackedScene" id=9]
+[ext_resource path="res://goap/goals/g_meet_with_closest.tscn" type="PackedScene" id=10]
+[ext_resource path="res://goap/goals/g_have_conversation.tscn" type="PackedScene" id=11]
+[ext_resource path="res://goap/goals/g_handle_scared_civilian.tscn" type="PackedScene" id=12]
+
+[node name="civilian_goap" instance=ExtResource( 1 )]
+
+script = ExtResource( 2 )
+
+[node name="a_wander" parent="Actions" index="0" instance=ExtResource( 3 )]
+
+[node name="a_approach_npc_talk" parent="Actions" index="1" instance=ExtResource( 4 )]
+
+[node name="a_conversation" parent="Actions" index="2" instance=ExtResource( 5 )]
+
+[node name="a_flee" parent="Actions" index="3" instance=ExtResource( 6 )]
+
+[node name="a_move_walk" parent="Actions" index="4" instance=ExtResource( 7 )]
+
+[node name="a_move_flee" parent="Actions" index="5" instance=ExtResource( 8 )]
+
+[node name="g_hangout" parent="Goals" index="0" instance=ExtResource( 9 )]
+
+[node name="g_meet_with_closest" parent="Goals" index="1" instance=ExtResource( 10 )]
+
+[node name="g_have_conversation" parent="Goals" index="2" instance=ExtResource( 11 )]
+
+[node name="g_handle_scared_civilian" parent="Goals" index="3" instance=ExtResource( 12 )]
+
+

@@ -1,0 +1,28 @@
+[gd_scene load_steps=9 format=2]
+
+[ext_resource path="res://goap/goap_agent.tscn" type="PackedScene" id=1]
+[ext_resource path="res://goap/agents/gang_member_goap.gd" type="Script" id=2]
+[ext_resource path="res://goap/actions/a_conversation.tscn" type="PackedScene" id=3]
+[ext_resource path="res://goap/actions/a_follow_gangleader.tscn" type="PackedScene" id=4]
+[ext_resource path="res://goap/actions/a_lead_gang.tscn" type="PackedScene" id=5]
+[ext_resource path="res://goap/actions/a_move_normal.tscn" type="PackedScene" id=6]
+[ext_resource path="res://goap/goals/g_have_conversation.tscn" type="PackedScene" id=7]
+[ext_resource path="res://goap/goals/g_gangmove.tscn" type="PackedScene" id=8]
+
+[node name="gang_member_goap" instance=ExtResource( 1 )]
+
+script = ExtResource( 2 )
+
+[node name="a_conversation" parent="Actions" index="0" instance=ExtResource( 3 )]
+
+[node name="a_follow_gangleader" parent="Actions" index="1" instance=ExtResource( 4 )]
+
+[node name="a_lead_gang" parent="Actions" index="2" instance=ExtResource( 5 )]
+
+[node name="a_move_normal" parent="Actions" index="3" instance=ExtResource( 6 )]
+
+[node name="g_have_conversation" parent="Goals" index="0" instance=ExtResource( 7 )]
+
+[node name="g_gangmove" parent="Goals" index="1" instance=ExtResource( 8 )]
+
+

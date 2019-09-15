@@ -1,0 +1,18 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://goap/actions/a_move_normal.gd" type="Script" id=1]
+
+[node name="a_move_normal" type="Node"]
+
+script = ExtResource( 1 )
+
+[node name="wander_timer" type="Timer" parent="." index="0"]
+
+process_mode = 1
+wait_time = 3.0
+one_shot = true
+autostart = false
+
+[connection signal="timeout" from="wander_timer" to="." method="_on_wander_timer_timeout"]
+
+

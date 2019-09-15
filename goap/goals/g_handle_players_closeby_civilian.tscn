@@ -1,0 +1,9 @@
+[gd_scene load_steps=2 format=2]
+
+[ext_resource path="res://goap/goals/g_handle_players_closeby_civilian.gd" type="Script" id=1]
+
+[node name="g_handle_players_closeby_civilian" type="Node"]
+
+script = ExtResource( 1 )
+
+

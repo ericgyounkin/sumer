@@ -8,8 +8,8 @@ const W = 8
 var cell_walls = {Vector2(0, -1): N, Vector2(1, 0): E, Vector2(0, 1): S, Vector2(-1, 0): W}
 
 var tile_size
-var width = 100
-var height = 100
+var width = 200
+var height = 200
 
 onready var Map = $TileMap
 
@@ -36,6 +36,9 @@ func _unhandled_input(event):
 				skip_extra_wheel = false
 			else:
 				skip_extra_wheel = true
+		elif event.button_index == BUTTON_MIDDLE and event.pressed:
+			$customcamera.enablemove = true
+			$customcamera.target_move = get_global_mouse_position()
 
 func check_neighbors(cell, unvisited):
 	var list = []
@@ -50,7 +53,7 @@ func generate_simplexnoise_heightmap():
 	# Configure
 	noise.seed = randi()
 	noise.octaves = 5
-	noise.period = 64.0
+	noise.period = 25.0
 	noise.persistence = 0.5
 	
 	# Sample
@@ -58,6 +61,7 @@ func generate_simplexnoise_heightmap():
 	var minval = 999.0
 	var hgtmap = Array()
 	hgtmap.resize(width)
+	
 	for x in range(width):
 		hgtmap[x] = Array()
 		hgtmap[x].resize(height)
@@ -67,6 +71,7 @@ func generate_simplexnoise_heightmap():
 				minval = hgtmap[x][y]
 			if hgtmap[x][y] > maxval:
 				maxval = hgtmap[x][y]
+	
 	return [hgtmap, minval, maxval]
 	#var img = noise.get_image(1026,600)
 	#var txture = ImageTexture.new()
@@ -76,10 +81,12 @@ func generate_simplexnoise_heightmap():
 func generate_tile_lookup(maxval, minval):
 	# Want nine categories for the nine types of tiles
 	var totalrange = maxval - minval
+
 	var indx = totalrange / 9
 	var lkup = Array()
-	
+
 	var wrkingval = minval
+	
 	for i in range(9):
 		lkup.append(wrkingval)
 		wrkingval += indx
@@ -87,12 +94,41 @@ func generate_tile_lookup(maxval, minval):
 	
 func build_world_texture(hgtmaptable, hgtmap):
 	Map.clear()
+	var fnd = false
+	var deeptiles = []
+	var medtiles = []
+	var shallowtiles = []
+
+	# first pass build the basic terrain
 	for x in range(width):
 		for y in range(height):
+			fnd = false
 			for vl in hgtmaptable:
 				if hgtmap[x][y] >= vl:
 					Map.set_cellv(Vector2(x, y), hgtmaptable.bsearch(vl))
+				else:
+					# get here the time after you find the right tile to use, index - 1 is the right tile
+					if hgtmaptable.bsearch(vl) - 1 == 0:
+						deeptiles.append(Vector2(x, y))
+					elif hgtmaptable.bsearch(vl) - 1 == 1:
+						medtiles.append(Vector2(x, y))
+					elif hgtmaptable.bsearch(vl) - 1 == 2:
+						shallowtiles.append(Vector2(x, y))
+					break
 
+	# get the closest to the border deep tiles, 
+	var brder_deepest = {'top': deeptiles[0], 'bottom': deeptiles[0], 'east': deeptiles[0], 'west': deeptiles[0]}
+	for tls in deeptiles:
+		if tls.y < brder_deepest['top'].y:
+			brder_deepest['top'] = tls
+		elif tls.y > brder_deepest['bottom'].y:
+			brder_deepest['bottom'] = tls
+		elif tls.x < brder_deepest['west'].x:
+			brder_deepest['west'] = tls
+		elif tls.x > brder_deepest['east'].x:
+			brder_deepest['east'] = tls
+	print(brder_deepest)
+	
 func make_maze():
 	var unvisited = []
 	var stack = []

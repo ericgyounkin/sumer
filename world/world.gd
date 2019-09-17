@@ -19,7 +19,7 @@ func _ready():
 	randomize()
 	tile_size = Map.cell_size
 	var hgtmap = generate_simplexnoise_heightmap()
-	var hgtmap_tbl = generate_tile_lookup(hgtmap[2], hgtmap[1])
+	var hgtmap_tbl = generate_desert_tile_lookup(hgtmap[2], hgtmap[1])
 	$TextureRect.texture = build_world_texture(hgtmap_tbl, hgtmap[0])
 
 func _unhandled_input(event):
@@ -52,8 +52,8 @@ func generate_simplexnoise_heightmap():
 
 	# Configure
 	noise.seed = randi()
-	noise.octaves = 5
-	noise.period = 25.0
+	noise.octaves = 10
+	noise.period = 75.0
 	noise.persistence = 0.5
 	
 	# Sample
@@ -78,11 +78,11 @@ func generate_simplexnoise_heightmap():
 	#txture.create_from_image(img)
 	#return txture
 
-func generate_tile_lookup(maxval, minval):
+func generate_oasis_tile_lookup(maxval, minval):
 	# Want nine categories for the nine types of tiles
 	var totalrange = maxval - minval
 
-	var indx = totalrange / 9
+	var indx = (totalrange / 9) * 2
 	var lkup = Array()
 
 	var wrkingval = minval
@@ -90,6 +90,25 @@ func generate_tile_lookup(maxval, minval):
 	for i in range(9):
 		lkup.append(wrkingval)
 		wrkingval += indx
+		indx /= 2
+	return lkup
+	
+func generate_desert_tile_lookup(maxval, minval):
+	# Want nine categories for the nine types of tiles
+	var totalrange = maxval - minval
+
+	var indx = (totalrange / 9) / 3
+	var lkup = Array()
+
+	var wrkingval = minval
+	
+	for i in range(9):
+		lkup.append(wrkingval)
+		indx += (indx / 4)
+		wrkingval += indx
+	print(minval)
+	print(maxval)
+	print(lkup)
 	return lkup
 	
 func build_world_texture(hgtmaptable, hgtmap):
@@ -128,6 +147,33 @@ func build_world_texture(hgtmaptable, hgtmap):
 		elif tls.x > brder_deepest['east'].x:
 			brder_deepest['east'] = tls
 	print(brder_deepest)
+	
+	# start on the side that has the closest to the border tile
+	var distfromedge_top = brder_deepest['top'].y
+	var distfromedge_bottom = height - brder_deepest['bottom'].y
+	var distfromedge_west = brder_deepest['west'].x
+	var distfromedge_east = width - brder_deepest['east'].x
+	# for now just do top to bottom
+	
+	# get the three biggest concentrations of deepwater
+	var temphgt = []
+	var deepest_tls = []
+	var deepest_tls_sorted = []
+	var deepest_tls_location = []
+    # get the deepest three spots first
+	for tls in deeptiles:
+		temphgt = hgtmap[tls.x][tls.y]
+		deepest_tls.append(temphgt)
+		
+	deepest_tls_sorted = deepest_tls.duplicate()
+	deepest_tls_sorted.sort()
+	print(deepest_tls)
+	print('-----------')
+	print(deepest_tls_sorted)
+		#for spts in deepspots:
+			# check if deeptile is deeper than previously logged deepspots and also separated from them
+		#	if (temphgt < hgtmap[spts.x][spts.y]) and tls.distance_to(spts) > 5:
+				
 	
 func make_maze():
 	var unvisited = []

@@ -45,6 +45,24 @@ func check_tile_in_map(til):
 		return true
 	else:
 		return false
+
+func find_tile_neighbors_same_type(til, override_tile_type=null):
+	var tiletype = 0
+	if !(override_tile_type == null):
+		tiletype = override_tile_type
+	else:
+		tiletype = Map.get_cellv(til)
+	var neighbors = {'N': til + Vector2(0, 1), 'E': til + Vector2(1, 0),
+	                 'W': til + Vector2(-1, 0), 'S': til + Vector2(0, -1),
+					 'NE': til + Vector2(1, 1), 'SW': til + Vector2(-1, -1),
+	                 'NW': til + Vector2(-1, 1), 'SE': til + Vector2(1, -1)}
+	# search tiles and if they exist return the number of tiles that match the tiletype
+	var sametype = []
+	for nbr in neighbors:
+		if check_tile_in_map(neighbors[nbr]) == true:
+			if Map.get_cellv(neighbors[nbr]) == tiletype:
+				sametype.append(nbr)
+	return sametype
 	
 func generate_simplexnoise_heightmap():
 	var noise = OpenSimplexNoise.new()
@@ -335,9 +353,10 @@ func expand_river(rivertiles, expandtiles, mag_inc):
 
 	return expandtiles
 	
-func expand_river_v2(rivertiles, expandtiles, mag_inc):	
-	var midexpand = false
-	var shallexpand = false
+func expand_river_v2(rivertiles, mag_inc, midexpand, shallexpand):	
+	var deeprivtiles = []
+	var medrivtiles = []
+	var shallrivtiles = []
 	
 	var ct = 0
 	for til in rivertiles:
@@ -358,15 +377,27 @@ func expand_river_v2(rivertiles, expandtiles, mag_inc):
 			newtils.append(til + Vector2(0, -1 * (f + 1)))
 			newtils.append(til + Vector2(1 * (f + 1), -1 * (f + 1)))
 			
+			#newtils.append(til + Vector2(0 + (f + 1), 1 * (f + 1)))
+			#newtils.append(til + Vector2(-1 * (f + 1), 0 + (f + 1)))
+			#newtils.append(til + Vector2(1 * (f + 1), 0 + (f + 1)))
+			#newtils.append(til + Vector2(0 + (f + 1), -1 * (f + 1)))
+			
+			#newtils.append(til + Vector2(0 - (f + 1), 1 * (f + 1)))
+			#newtils.append(til + Vector2(-1 * (f + 1), 0 - (f + 1)))
+			#newtils.append(til + Vector2(1 * (f + 1), 0 - (f + 1)))
+			#newtils.append(til + Vector2(0 - (f + 1), -1 * (f + 1)))
+
 		for newt in newtils:
-			if check_tile_in_map(newt) and !(newt in expandtiles) and !(newt in rivertiles):
-				expandtiles.append(newt)
-				#Map.set_cellv(Vector2(til.x, til.y - y), Map.get_cellv(Vector2(til.x, til.y - y)) - 1)
-				Map.set_cellv(newt, 0)
-		
+			if check_tile_in_map(newt) and !(newt in rivertiles) and !(newt in deeprivtiles):
+				# smooth out edge of deeprivtiles by only accepting tiles with neighbors of same type
+				if len(find_tile_neighbors_same_type(newt, 0)) >= 3:
+					deeprivtiles.append(newt)
+					#Map.set_cellv(Vector2(til.x, til.y - y), Map.get_cellv(Vector2(til.x, til.y - y)) - 1)
+					Map.set_cellv(newt, 0)
+
 		if midexpand:
 			# draw in the middle tiles
-			var mid_factr = round(factr / 2)
+			var mid_factr = factr
 			newtils = []
 			for f in range(mid_factr):
 				newtils.append(til + Vector2(-1 * (f + factr + 1), 1 * (f + factr + 1)))
@@ -377,33 +408,41 @@ func expand_river_v2(rivertiles, expandtiles, mag_inc):
 				newtils.append(til + Vector2(-1 * (f + factr + 1), -1 * (f + factr + 1)))
 				newtils.append(til + Vector2(0, -1 * (f + factr + 1)))
 				newtils.append(til + Vector2(1 * (f + factr + 1), -1 * (f + factr + 1)))
-				
+			
 			for newt in newtils:
-				if check_tile_in_map(newt) and !(newt in expandtiles) and !(newt in rivertiles):
-					expandtiles.append(newt)
-					#Map.set_cellv(Vector2(til.x, til.y - y), Map.get_cellv(Vector2(til.x, til.y - y)) - 1)
-					Map.set_cellv(newt, 1)
-		
+				if check_tile_in_map(newt) and !(newt in rivertiles) and !(newt in deeprivtiles) and !(newt in medrivtiles):
+					if (len(find_tile_neighbors_same_type(newt, 0)) >= 1):
+						medrivtiles.append(newt)
+			# have to do a second pass, so that your check for nearby tiles isn't affected by you changing the tile type
+			for medt in medrivtiles:
+				Map.set_cellv(medt, 1)
+			
 			if shallexpand:
 				# draw in the shallow tiles
+				var shall_factr = round(factr / 2)
 				newtils = []
-				for f in range(mid_factr):
-					newtils.append(til + Vector2(-1 * (f + factr + mid_factr + 1), 1 * (f + factr + mid_factr + 1)))
-					newtils.append(til + Vector2(0, 1 * (f + factr + mid_factr + 1)))
-					newtils.append(til + Vector2(1 * (f + factr + mid_factr + 1), 1 * (f + factr + mid_factr + 1)))
-					newtils.append(til + Vector2(-1 * (f + factr + mid_factr + 1), 0))
-					newtils.append(til + Vector2(1 * (f + factr + mid_factr + 1), 0))
-					newtils.append(til + Vector2(-1 * (f + factr + mid_factr + 1), -1 * (f + factr + mid_factr + 1)))
-					newtils.append(til + Vector2(0, -1 * (f + factr + mid_factr + 1)))
-					newtils.append(til + Vector2(1 * (f + factr + mid_factr + 1), -1 * (f + factr + mid_factr + 1)))
-					
+				for f in range(shall_factr):
+					newtils.append(til + Vector2(-1 * (f + factr + shall_factr + 1), 1 * (f + factr + shall_factr + 1)))
+					newtils.append(til + Vector2(0, 1 * (f + factr + shall_factr + 1)))
+					newtils.append(til + Vector2(1 * (f + factr + shall_factr + 1), 1 * (f + factr + shall_factr + 1)))
+					newtils.append(til + Vector2(-1 * (f + factr + shall_factr + 1), 0))
+					newtils.append(til + Vector2(1 * (f + factr + shall_factr + 1), 0))
+					newtils.append(til + Vector2(-1 * (f + factr + shall_factr + 1), -1 * (f + factr + shall_factr + 1)))
+					newtils.append(til + Vector2(0, -1 * (f + factr + shall_factr + 1)))
+					newtils.append(til + Vector2(1 * (f + factr + shall_factr + 1), -1 * (f + factr + shall_factr + 1)))
+				
 				for newt in newtils:
-					if check_tile_in_map(newt) and !(newt in expandtiles) and !(newt in rivertiles):
-						expandtiles.append(newt)
-						#Map.set_cellv(Vector2(til.x, til.y - y), Map.get_cellv(Vector2(til.x, til.y - y)) - 1)
-						Map.set_cellv(newt, 1)
-		
-	return expandtiles
+					if check_tile_in_map(newt) and !(newt in rivertiles) and !(newt in deeprivtiles) and !(newt in medrivtiles) and !(newt in shallrivtiles):
+						if (len(find_tile_neighbors_same_type(newt, 1)) >= 1):
+							shallrivtiles.append(newt)
+				# have to do a second pass, so that your check for nearby tiles isn't affected by you changing the tile type
+				for medt in shallrivtiles:
+					Map.set_cellv(medt, 2)
+		ct += 1
+	print('expand: ' + str(len(deeprivtiles)) + ' new deep river tiles')
+	print('expand: ' + str(len(medrivtiles)) + ' new medium river tiles')
+	print('expand: ' + str(len(shallrivtiles)) + ' new shallow river tiles')
+	return [deeprivtiles, medrivtiles, shallrivtiles] 
 
 func build_world_texture(hgtmaptable, hgtmap):
 	Map.clear()
@@ -442,8 +481,10 @@ func build_world_texture(hgtmaptable, hgtmap):
 		# then just connect them following the height map
 		var expandtiles = []
 		var rivertiles = river_wander(hgtmap, start_pt, end_pt)
-		expandtiles = expand_river_v2(rivertiles, expandtiles, 5)
-		
+		var tilesarr = expand_river_v2(rivertiles, 8, true, false)
+		var deeprivtiles = tilesarr[0]
+		var medrivtiles = tilesarr[1]
+		var shallrivtiles = tilesarr[2]
 		
 		# get the three biggest concentrations of deepwater
 		var temphgt = []

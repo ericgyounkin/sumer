@@ -40,7 +40,12 @@ func _unhandled_input(event):
 			$customcamera.enablemove = true
 			$customcamera.target_move = get_global_mouse_position()
 
-
+func check_tile_in_map(til):
+	if (til.x < width) and (til.x >= 0) and (til.y < height) and (til.y >= 0):
+		return true
+	else:
+		return false
+	
 func generate_simplexnoise_heightmap():
 	var noise = OpenSimplexNoise.new()
 
@@ -184,6 +189,12 @@ func get_border_deepest(deeptiles, medtiles, shallowtiles):
 			for tls in medtiles:
 				if tls.x > brder_deepest['east'].x:
 					brder_deepest['east'] = tls
+					
+	# now force border deepest selections to actually be at the border regardless
+	brder_deepest['top'].y = 0
+	brder_deepest['bottom'].y = height - 1
+	brder_deepest['west'].x = 0
+	brder_deepest['east'].x = width - 1
 	
 	print(brder_deepest)
 	return brder_deepest
@@ -195,7 +206,7 @@ func get_nondeepwater_neighbors(pt):
 	# neighbors can't be outside the bounds of the map
 	var offenders = []
 	for nbr in neighbors:
-		if (neighbors[nbr].x < 0) or (neighbors[nbr].x >= width) or (neighbors[nbr].y < 0) or (neighbors[nbr].y >= height):
+		if check_tile_in_map(neighbors[nbr]) == false:
 			offenders.append(nbr)
 	for off in offenders:
 		neighbors.erase(off)
@@ -219,7 +230,9 @@ func river_wander(hgtmap, startpt, endpt):
 	var new_startpt = startpt
 	var moved_to = Vector2()
 	var history = []
-	var override_hgts = 5
+	
+	# parameters for the algorithm
+	var override_hgts = 2  # 
 	
 	while moved_to != endpt:
 	#for i in range(200):
@@ -243,18 +256,18 @@ func river_wander(hgtmap, startpt, endpt):
 		for hts in neighbor_hts:
 			 htsarr.append(hts)
 		htsarr.sort()
-		
+	
 		#  cant be a pt youve moved to before
 		if override_hgts != 0:
 			for hts in htsarr:
 				var possible_pt = neighbors[neighbor_hts[hts]]
 				if !(possible_pt in history):
 					moved_to = possible_pt
-					# to prevent just pooling up in deep areas, override every fifth iteration
+					# to prevent just pooling up in deep areas, override every third iteration
 					override_hgts -= 1
 					break
 		else:
-			override_hgts = 7
+			override_hgts = 3
 			
 		# ok, if you get here, just move one tile towards the endpt
 		if moved_to == Vector2():
@@ -263,8 +276,135 @@ func river_wander(hgtmap, startpt, endpt):
 		new_startpt = moved_to
 		Map.set_cellv(moved_to, 0)
 		history.append(moved_to)
-
+	return history
 	
+func expand_river(rivertiles, expandtiles, mag_inc):	
+	var ct = 0
+	for til in rivertiles:
+		if ct in [0,1,2]:
+			ct += 1
+			continue
+		if ct == len(rivertiles)-4:
+			break
+		# its a problem of calculating slope of the line and then getting a perpendicular
+		#    want to widen along the perpendicular
+		var cur_idx = ct
+		var prevtil = rivertiles[cur_idx - 1]
+		var nexttil = rivertiles[cur_idx + 1]
+		var wayback_til = rivertiles[cur_idx - 2]
+		var wayforward_til = rivertiles[cur_idx + 2]
+		
+		var slope = (wayforward_til - wayback_til).normalized().round()
+		var rotatedslope = slope.rotated(-PI/2) * mag_inc
+		
+#		var newrtil = [til + rotatedslope, til - rotatedslope, prevtil + rotatedslope, prevtil - rotatedslope, nexttil + rotatedslope, nexttil - rotatedslope]
+#		for newtil in newrtil:
+#			if check_tile_in_map(newtil) and !(newtil in expandtiles):
+#				expandtiles.append(newtil)
+#				Map.set_cellv(newtil, 0)
+
+		if rotatedslope.x < rotatedslope.y:
+			rotatedslope += Vector2(2,0)
+		if rotatedslope.y < rotatedslope.x:
+			rotatedslope += Vector2(0,2)
+
+		# now account for all tiles that fall in this perpendicular
+		for x in rotatedslope.x:
+			for y in rotatedslope.y:
+				if check_tile_in_map(Vector2(til.x + x, til.y)) and !(Vector2(til.x + x, til.y) in expandtiles):
+					if (Map.get_cellv(Vector2(til.x + x, til.y)) != 0):
+						expandtiles.append(Vector2(til.x + x, til.y))
+						#Map.set_cellv(Vector2(til.x + x, til.y), Map.get_cellv(Vector2(til.x + x, til.y)) - 1)
+						Map.set_cellv(Vector2(til.x + x, til.y), 0)
+				if check_tile_in_map(Vector2(til.x, til.y + y)) and !(Vector2(til.x, til.y + y) in expandtiles):
+					if (Map.get_cellv(Vector2(til.x, til.y + y)) != 0):
+						expandtiles.append(Vector2(til.x, til.y + y))
+						#Map.set_cellv(Vector2(til.x, til.y + y), Map.get_cellv(Vector2(til.x, til.y + y)) - 1)
+						Map.set_cellv(Vector2(til.x, til.y + y), 0)
+				if check_tile_in_map(Vector2(til.x - x, til.y)) and !(Vector2(til.x - x, til.y) in expandtiles):
+					if (Map.get_cellv(Vector2(til.x - x, til.y)) != 0):
+						expandtiles.append(Vector2(til.x - x, til.y))
+						#Map.set_cellv(Vector2(til.x - x, til.y), Map.get_cellv(Vector2(til.x - x, til.y)) - 1)
+						Map.set_cellv(Vector2(til.x - x, til.y), 0)
+				if check_tile_in_map(Vector2(til.x, til.y - y)) and !(Vector2(til.x, til.y - y) in expandtiles):
+					if (Map.get_cellv(Vector2(til.x, til.y - y)) != 0):
+						expandtiles.append(Vector2(til.x, til.y - y))
+						#Map.set_cellv(Vector2(til.x, til.y - y), Map.get_cellv(Vector2(til.x, til.y - y)) - 1)
+						Map.set_cellv(Vector2(til.x, til.y - y), 0)
+		ct += 1
+
+	return expandtiles
+	
+func expand_river_v2(rivertiles, expandtiles, mag_inc):	
+	var midexpand = false
+	var shallexpand = false
+	
+	var ct = 0
+	for til in rivertiles:
+		# determine block size
+		var factr = round(mag_inc / 2)
+		var rnge = int(factr * 2)
+		factr = (randi() % (rnge + 1)) + round(mag_inc - (rnge / 2))
+		
+		# just draw a big block around each river tile, fuck it
+		var newtils = []
+		for f in range(factr):
+			newtils.append(til + Vector2(-1 * (f + 1), 1 * (f + 1)))
+			newtils.append(til + Vector2(0, 1 * (f + 1)))
+			newtils.append(til + Vector2(1 * (f + 1), 1 * (f + 1)))
+			newtils.append(til + Vector2(-1 * (f + 1), 0))
+			newtils.append(til + Vector2(1 * (f + 1), 0))
+			newtils.append(til + Vector2(-1 * (f + 1), -1 * (f + 1)))
+			newtils.append(til + Vector2(0, -1 * (f + 1)))
+			newtils.append(til + Vector2(1 * (f + 1), -1 * (f + 1)))
+			
+		for newt in newtils:
+			if check_tile_in_map(newt) and !(newt in expandtiles) and !(newt in rivertiles):
+				expandtiles.append(newt)
+				#Map.set_cellv(Vector2(til.x, til.y - y), Map.get_cellv(Vector2(til.x, til.y - y)) - 1)
+				Map.set_cellv(newt, 0)
+		
+		if midexpand:
+			# draw in the middle tiles
+			var mid_factr = round(factr / 2)
+			newtils = []
+			for f in range(mid_factr):
+				newtils.append(til + Vector2(-1 * (f + factr + 1), 1 * (f + factr + 1)))
+				newtils.append(til + Vector2(0, 1 * (f + factr + 1)))
+				newtils.append(til + Vector2(1 * (f + factr + 1), 1 * (f + factr + 1)))
+				newtils.append(til + Vector2(-1 * (f + factr + 1), 0))
+				newtils.append(til + Vector2(1 * (f + factr + 1), 0))
+				newtils.append(til + Vector2(-1 * (f + factr + 1), -1 * (f + factr + 1)))
+				newtils.append(til + Vector2(0, -1 * (f + factr + 1)))
+				newtils.append(til + Vector2(1 * (f + factr + 1), -1 * (f + factr + 1)))
+				
+			for newt in newtils:
+				if check_tile_in_map(newt) and !(newt in expandtiles) and !(newt in rivertiles):
+					expandtiles.append(newt)
+					#Map.set_cellv(Vector2(til.x, til.y - y), Map.get_cellv(Vector2(til.x, til.y - y)) - 1)
+					Map.set_cellv(newt, 1)
+		
+			if shallexpand:
+				# draw in the shallow tiles
+				newtils = []
+				for f in range(mid_factr):
+					newtils.append(til + Vector2(-1 * (f + factr + mid_factr + 1), 1 * (f + factr + mid_factr + 1)))
+					newtils.append(til + Vector2(0, 1 * (f + factr + mid_factr + 1)))
+					newtils.append(til + Vector2(1 * (f + factr + mid_factr + 1), 1 * (f + factr + mid_factr + 1)))
+					newtils.append(til + Vector2(-1 * (f + factr + mid_factr + 1), 0))
+					newtils.append(til + Vector2(1 * (f + factr + mid_factr + 1), 0))
+					newtils.append(til + Vector2(-1 * (f + factr + mid_factr + 1), -1 * (f + factr + mid_factr + 1)))
+					newtils.append(til + Vector2(0, -1 * (f + factr + mid_factr + 1)))
+					newtils.append(til + Vector2(1 * (f + factr + mid_factr + 1), -1 * (f + factr + mid_factr + 1)))
+					
+				for newt in newtils:
+					if check_tile_in_map(newt) and !(newt in expandtiles) and !(newt in rivertiles):
+						expandtiles.append(newt)
+						#Map.set_cellv(Vector2(til.x, til.y - y), Map.get_cellv(Vector2(til.x, til.y - y)) - 1)
+						Map.set_cellv(newt, 1)
+		
+	return expandtiles
+
 func build_world_texture(hgtmaptable, hgtmap):
 	Map.clear()
 	
@@ -300,7 +440,9 @@ func build_world_texture(hgtmaptable, hgtmap):
 		print('end ' + str(end_pt))
 		
 		# then just connect them following the height map
-		river_wander(hgtmap, start_pt, end_pt)
+		var expandtiles = []
+		var rivertiles = river_wander(hgtmap, start_pt, end_pt)
+		expandtiles = expand_river_v2(rivertiles, expandtiles, 5)
 		
 		
 		# get the three biggest concentrations of deepwater

@@ -110,6 +110,6 @@ margin_right = 40.0
 margin_bottom = 40.0
 
 [node name="customcamera" parent="." instance=ExtResource( 3 )]
-offset = Vector2( 1000, 1000 )
+offset = Vector2( 1200, 3000 )
 current = true
 zoom = Vector2( 5, 5 )

@@ -1,0 +1,22 @@
+[gd_scene format=2]
+
+[node name="progbar" type="Control"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="proggrid" type="GridContainer" parent="."]
+margin_right = 327.0
+margin_bottom = 60.0
+columns = 2
+
+[node name="lbl" type="Label" parent="proggrid"]
+margin_right = 34.0
+margin_bottom = 14.0
+text = "Label"
+align = 1
+valign = 1
+
+[node name="bar" type="ProgressBar" parent="proggrid"]
+margin_left = 38.0
+margin_right = 238.0
+margin_bottom = 14.0

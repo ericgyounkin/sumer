@@ -16,12 +16,17 @@ _global_script_class_icons={
 [application]
 
 config/name="sumer"
-run/main_scene="res://world/world.tscn"
+run/main_scene="res://world/worldgen.tscn"
 config/icon="res://icon.png"
 
 [autoload]
 
 general_global="*res://general_global.gd"
+
+[display]
+
+window/size/width=1920
+window/size/height=1080
 
 [editor_plugins]
 

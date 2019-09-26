@@ -7,6 +7,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 margin_top = -0.735107
 margin_bottom = -1036.74
+rect_min_size = Vector2( 0, 43 )
 script = ExtResource( 1 )
 
 [node name="margin" type="MarginContainer" parent="."]

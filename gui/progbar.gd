@@ -29,3 +29,12 @@ func setup_bar(txt, minr, maxr, maxsizeofbar=0):
 
 func update_bar(prog):
 	bar.value = prog
+	
+
+func increment_bar():
+	if bar.value != bar.max_value:
+		bar.value += 1
+		
+
+func hack_fill_bar():
+	bar.value = bar.max_value

@@ -14,15 +14,26 @@ var width = 200
 var height = 200
 
 onready var Map = $TileMap
+var progress = false
+var progbar = null
 
 var skip_extra_wheel = false
+
+signal updateprogbars
+var genned = false
+var hgtmap
+var hgtmap_tbl
 
 func _ready():
 	randomize()
 	tile_size = Map.cell_size
-	var hgtmap = generate_simplexnoise_heightmap()
-	var hgtmap_tbl = generate_desert_tile_lookup(hgtmap[2], hgtmap[1])
-	$GameMap.texture = build_world_texture(hgtmap_tbl, hgtmap[0])
+	if get_parent().has_node("world_loading_screen"):
+		connect("updateprogbars", get_parent().get_node("world_loading_screen"), "updatebars")
+
+func create_new_world(placeholder):
+	self.generate_simplexnoise_heightmap()
+	self.generate_desert_tile_lookup(hgtmap[2], hgtmap[1])
+	$GameMap.texture = self.build_world_texture(hgtmap_tbl, hgtmap[0])
 
 func _unhandled_input(event):
 	if event is InputEventMouseButton:
@@ -67,6 +78,9 @@ func find_tile_neighbors_same_type(til, override_tile_type=null):
 	return sametype
 	
 func generate_simplexnoise_heightmap():
+	if progress:
+		progbar = $world_loading_screen/bars/heightmapbar
+		progbar.setup_bar('Generate Heightmap', 0, width * height * 2)
 	var noise = OpenSimplexNoise.new()
 
 	# Configure
@@ -90,6 +104,8 @@ func generate_simplexnoise_heightmap():
 				minval = hgtmap[x][y]
 			if hgtmap[x][y] > maxval:
 				maxval = hgtmap[x][y]
+			if progress:
+				progbar.increment_bar()
 	
 	# we might want to actually use these numbers direct, let's reference them to a made up datum
 	#   Result := ((Input - InputLow) / (InputHigh - InputLow)) * (OutputHigh - OutputLow) + OutputLow;
@@ -98,8 +114,11 @@ func generate_simplexnoise_heightmap():
 	for x in range(width):
 		for y in range(height):
 			hgtmap[x][y] = ((hgtmap[x][y] - minval) / (maxval - minval)) * (outputhigh - outputlow) + outputlow
-	
-	return [hgtmap, outputlow, outputhigh]
+			if progress:
+				progbar.increment_bar()
+	if progress:
+		progbar.hack_fill_bar()
+	hgtmap = [hgtmap, outputlow, outputhigh]
 	#var img = noise.get_image(1026,600)
 	#var txture = ImageTexture.new()
 	#txture.create_from_image(img)
@@ -121,6 +140,10 @@ func generate_oasis_tile_lookup(maxval, minval):
 	return lkup
 	
 func generate_desert_tile_lookup(maxval, minval):
+	if progress:
+		progbar = $world_loading_screen/bars/lookuptablebar
+		progbar.setup_bar('Generate Lookup Table', 0, 9)
+		
 	# Want nine categories for the nine types of tiles
 	var totalrange = maxval - minval
 
@@ -133,11 +156,14 @@ func generate_desert_tile_lookup(maxval, minval):
 		lkup.append(wrkingval)
 		indx += (indx / 5)
 		wrkingval += indx
-	
+		if progress:
+			progbar.increment_bar()
+	if progress:
+		progbar.hack_fill_bar()
 	print(lkup)
-	return lkup
+	hgtmap_tbl = lkup
 	
-func first_pass_terrain(hgtmaptable, hgtmap):
+func first_pass_terrain(hgtmaptable, hgtmap, progbar=null):
 	var deeptiles = []
 	var medtiles = []
 	var shallowtiles = []
@@ -157,6 +183,10 @@ func first_pass_terrain(hgtmaptable, hgtmap):
 					elif hgtmaptable.bsearch(vl) - 1 == 2:
 						shallowtiles.append(Vector2(x, y))
 					break
+				if progbar != null:
+					progbar.increment_bar()
+	if progress:
+		progbar.hack_fill_bar()
 	return [deeptiles, medtiles, shallowtiles]
 
 func get_border_deepest(deeptiles, medtiles, shallowtiles):
@@ -246,7 +276,7 @@ func get_neighbor_heights(neighbors, hgtmap):
 		neighbor_hts[hgt] = pt
 	return neighbor_hts
 	
-func river_wander(hgtmap, startpt, endpt):
+func river_wander(hgtmap, startpt, endpt, progbar=null):
 	var new_startpt = startpt
 	var moved_to = Vector2()
 	var history = []
@@ -296,9 +326,14 @@ func river_wander(hgtmap, startpt, endpt):
 		new_startpt = moved_to
 		Map.set_cellv(moved_to, 0)
 		history.append(moved_to)
+		
+		if progbar != null:
+			progbar.increment_bar()
+	if progress:
+		progbar.hack_fill_bar()
 	return history
 	
-func expand_river(rivertiles, expandtiles, mag_inc):	
+func expand_river(rivertiles, expandtiles, mag_inc):
 	var ct = 0
 	for til in rivertiles:
 		if ct in [0,1,2]:
@@ -355,7 +390,7 @@ func expand_river(rivertiles, expandtiles, mag_inc):
 
 	return expandtiles
 	
-func expand_river_v2(rivertiles, mag_inc, midexpand, shallexpand):
+func expand_river_v2(rivertiles, mag_inc, midexpand, shallexpand, progbar):
 	var deeprivtiles = []
 	var medrivtiles = []
 	var shallrivtiles = []
@@ -392,6 +427,8 @@ func expand_river_v2(rivertiles, mag_inc, midexpand, shallexpand):
 					deeprivtiles.append(newt)
 					#Map.set_cellv(Vector2(til.x, til.y - y), Map.get_cellv(Vector2(til.x, til.y - y)) - 1)
 					Map.set_cellv(newt, 0)
+			if progbar != null:
+				progbar.increment_bar()
 		if debug:
 			print('New deep river tiles: ' + str(deeprivtiles))
 		
@@ -413,6 +450,8 @@ func expand_river_v2(rivertiles, mag_inc, midexpand, shallexpand):
 				if check_tile_in_map(newt) and !(newt in rivertiles) and !(newt in deeprivtiles) and !(newt in medrivtiles):
 					#if (len(find_tile_neighbors_same_type(newt, 0)) >= 3):
 					medrivtiles.append(newt)
+				if progbar != null:
+					progbar.increment_bar()
 			# have to do a second pass, so that your check for nearby tiles isn't affected by you changing the tile type
 			for medt in medrivtiles:
 				Map.set_cellv(medt, 1)
@@ -438,6 +477,8 @@ func expand_river_v2(rivertiles, mag_inc, midexpand, shallexpand):
 				if check_tile_in_map(newt) and !(newt in rivertiles) and !(newt in deeprivtiles) and !(newt in medrivtiles) and !(newt in shallrivtiles):
 					#if (len(find_tile_neighbors_same_type(newt, 1)) >= 3):
 					shallrivtiles.append(newt)
+				if progbar != null:
+					progbar.increment_bar()
 			# have to do a second pass, so that your check for nearby tiles isn't affected by you changing the tile type
 			for medt in shallrivtiles:
 				Map.set_cellv(medt, 2)
@@ -450,12 +491,20 @@ func expand_river_v2(rivertiles, mag_inc, midexpand, shallexpand):
 	print('expand: ' + str(len(deeprivtiles)) + ' new deep river tiles')
 	print('expand: ' + str(len(medrivtiles)) + ' new medium river tiles')
 	print('expand: ' + str(len(shallrivtiles)) + ' new shallow river tiles')
+	
+	if progbar != null:
+		progbar.hack_fill_bar()
 	return [deeprivtiles, medrivtiles, shallrivtiles] 
 
 func build_world_texture(hgtmaptable, hgtmap):
 	Map.clear()
 	
-	var tls = first_pass_terrain(hgtmaptable, hgtmap)
+	if progress:
+		progbar = $world_loading_screen/bars/firstpassterrainbar
+		progbar.setup_bar('Initial Terrain Generation', 0, width * height * len(hgtmaptable))
+	else:
+		progbar = null
+	var tls = first_pass_terrain(hgtmaptable, hgtmap, progbar)
 	var deeptiles = tls[0]
 	var medtiles = tls[1]
 	var shallowtiles = tls[2]
@@ -488,8 +537,21 @@ func build_world_texture(hgtmaptable, hgtmap):
 		
 		# then just connect them following the height map
 		var expandtiles = []
-		var rivertiles = river_wander(hgtmap, start_pt, end_pt)
-		var tilesarr = expand_river_v2(rivertiles, 4, true, true)
+		if progress:
+			progbar = $world_loading_screen/bars/rivergenbar
+			progbar.setup_bar('Find River Path', 0, width + height)
+		else:
+			progbar = null
+		var rivertiles = river_wander(hgtmap, start_pt, end_pt, progbar)
+		
+		var mag_river = 4
+		if progress:
+			progbar = $world_loading_screen/bars/riverwidenbar
+			progbar.setup_bar('Expand River', 0, len(rivertiles) * mag_river)
+		else:
+			progbar = null
+		var tilesarr = expand_river_v2(rivertiles, mag_river, true, true, progbar)
+		
 		var deeprivtiles = tilesarr[0]
 		var medrivtiles = tilesarr[1]
 		var shallrivtiles = tilesarr[2]

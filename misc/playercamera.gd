@@ -1,7 +1,14 @@
 extends Camera2D
 
-var smooth_zoom = general_global.startzoom
-var target_zoom = general_global.startzoom
+
+var startzoom = 8
+var maxzoom = 8
+var minzoom = 1.5
+var convzoom = 1.75
+var zoomincrement = 0.25
+
+var smooth_zoom = startzoom
+var target_zoom = startzoom
 
 var target_move = offset
 
@@ -13,7 +20,7 @@ var enablemove = false
 
 
 func _ready():
-	set_zoom(Vector2(general_global.startzoom, general_global.startzoom))
+	set_zoom(Vector2(startzoom, startzoom))
 
 func _process(delta):
 	if smooth_zoom != target_zoom:
@@ -26,7 +33,7 @@ func _process(delta):
 		
 func conv_zoomin():
 	priorzoom = target_zoom
-	target_zoom = general_global.convzoom
+	target_zoom = convzoom
 	
 func conv_zoomout():
 	target_zoom = priorzoom

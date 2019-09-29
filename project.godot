@@ -16,7 +16,7 @@ _global_script_class_icons={
 [application]
 
 config/name="sumer"
-run/main_scene="res://world/worldgen.tscn"
+run/main_scene="res://game.tscn"
 config/icon="res://icon.png"
 
 [autoload]
@@ -31,6 +31,10 @@ window/size/height=1080
 [editor_plugins]
 
 enabled=PoolStringArray( "GodotTIE" )
+
+[memory]
+
+limits/message_queue/max_size_kb=65536
 
 [rendering]
 

@@ -106,9 +106,11 @@ cell_size = Vector2( 64, 32 )
 format = 1
 
 [node name="GameMap" type="TextureRect" parent="."]
+visible = false
 margin_right = 40.0
 margin_bottom = 40.0
 
 [node name="customcamera" parent="." instance=ExtResource( 3 )]
 offset = Vector2( 1200, 3000 )
+current = true
 zoom = Vector2( 5, 5 )

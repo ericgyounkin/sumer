@@ -14,38 +14,63 @@ var width = 200
 var height = 200
 
 onready var Map = $TileMap
-var progress = false
-var progbar = null
+onready var WLS = get_parent().get_node('world_loading_screen')
+
+var progress = true
 
 var skip_extra_wheel = false
 
 signal updateprogbars
-var genned = false
+signal worldcreated
+
+#var genned = false
 var hgtmap
 var hgtmap_tbl
+var noise
+var maxval
+var minval
+
+var deeptiles = []
+var medtiles = []
+var shallowtiles = []
+
+var rivertiles = []
+var deeprivtiles = []
+var medrivtiles = []
+var shallrivtiles = []
+
 
 func _ready():
 	randomize()
 	tile_size = Map.cell_size
-	if get_parent().has_node("world_loading_screen"):
-		connect("updateprogbars", get_parent().get_node("world_loading_screen"), "updatebars")
+	if WLS:
+		connect("updateprogbars", WLS, "updatebars")
+	connect('worldcreated', get_parent(), 'startworld')
 
 func create_new_world(placeholder):
-	self.generate_simplexnoise_heightmap()
-	self.generate_desert_tile_lookup(hgtmap[2], hgtmap[1])
-	$GameMap.texture = self.build_world_texture(hgtmap_tbl, hgtmap[0])
+	var thread_simp = Thread.new()
+	thread_simp.start(self, "generate_simplexnoise_heightmap", null)
+	thread_simp.wait_to_finish()
+	
+	var thread_des = Thread.new()
+	thread_des.start(self, "generate_desert_tile_lookup", null)
+	thread_des.wait_to_finish()
+	
+	var thread_world = Thread.new()
+	thread_world.start(self, "build_world_texture", null)
+	thread_world.wait_to_finish()
 
 func _unhandled_input(event):
 	if event is InputEventMouseButton:
 		if event.button_index == BUTTON_WHEEL_UP:
-			if skip_extra_wheel and $customcamera.target_zoom >= general_global.minzoom:
-				$customcamera.target_zoom -= general_global.zoomincrement
+			if skip_extra_wheel and $customcamera.target_zoom >= $customcamera.minzoom:
+				$customcamera.target_zoom -= $customcamera.zoomincrement
 				skip_extra_wheel = false
 			else:
 				skip_extra_wheel = true
 		elif event.button_index == BUTTON_WHEEL_DOWN:
-			if skip_extra_wheel and $customcamera.target_zoom <= general_global.maxzoom:
-				$customcamera.target_zoom += general_global.zoomincrement
+			if skip_extra_wheel and $customcamera.target_zoom <= $customcamera.maxzoom:
+				$customcamera.target_zoom += $customcamera.zoomincrement
 				skip_extra_wheel = false
 			else:
 				skip_extra_wheel = true
@@ -77,11 +102,11 @@ func find_tile_neighbors_same_type(til, override_tile_type=null):
 				sametype.append(nbr)
 	return sametype
 	
-func generate_simplexnoise_heightmap():
+func generate_simplexnoise_heightmap(null):
 	if progress:
-		progbar = $world_loading_screen/bars/heightmapbar
-		progbar.setup_bar('Generate Heightmap', 0, width * height * 2)
-	var noise = OpenSimplexNoise.new()
+		WLS.call_deferred('setup_heightmap_bar', 'Generate Heightmap', 0, width * 2)
+		#WLS.setup_heightmap_bar('Generate Heightmap', 0, width * height * 2)
+	noise = OpenSimplexNoise.new()
 
 	# Configure
 	noise.seed = randi()
@@ -90,9 +115,9 @@ func generate_simplexnoise_heightmap():
 	noise.persistence = 0.5
 	
 	# Sample
-	var maxval = -999.0
-	var minval = 999.0
-	var hgtmap = Array()
+	maxval = -999.0
+	minval = 999.0
+	hgtmap = Array()
 	hgtmap.resize(width)
 	
 	for x in range(width):
@@ -104,8 +129,8 @@ func generate_simplexnoise_heightmap():
 				minval = hgtmap[x][y]
 			if hgtmap[x][y] > maxval:
 				maxval = hgtmap[x][y]
-			if progress:
-				progbar.increment_bar()
+		if progress:
+			WLS.call_deferred('increment_heightmap_bar')
 	
 	# we might want to actually use these numbers direct, let's reference them to a made up datum
 	#   Result := ((Input - InputLow) / (InputHigh - InputLow)) * (OutputHigh - OutputLow) + OutputLow;
@@ -114,10 +139,11 @@ func generate_simplexnoise_heightmap():
 	for x in range(width):
 		for y in range(height):
 			hgtmap[x][y] = ((hgtmap[x][y] - minval) / (maxval - minval)) * (outputhigh - outputlow) + outputlow
-			if progress:
-				progbar.increment_bar()
+		if progress:
+			WLS.call_deferred('increment_heightmap_bar')
 	if progress:
-		progbar.hack_fill_bar()
+		#WLS.call_deferred('hack_fill_heightmap_bar')
+		pass
 	hgtmap = [hgtmap, outputlow, outputhigh]
 	#var img = noise.get_image(1026,600)
 	#var txture = ImageTexture.new()
@@ -139,10 +165,12 @@ func generate_oasis_tile_lookup(maxval, minval):
 		indx /= 2
 	return lkup
 	
-func generate_desert_tile_lookup(maxval, minval):
+func generate_desert_tile_lookup(placeholder):
+	var maxval = hgtmap[2]
+	var minval = hgtmap[1]
+	
 	if progress:
-		progbar = $world_loading_screen/bars/lookuptablebar
-		progbar.setup_bar('Generate Lookup Table', 0, 9)
+		WLS.call_deferred('setup_lookup_bar', 'Generate Lookup Table', 0, 9)
 		
 	# Want nine categories for the nine types of tiles
 	var totalrange = maxval - minval
@@ -157,37 +185,37 @@ func generate_desert_tile_lookup(maxval, minval):
 		indx += (indx / 5)
 		wrkingval += indx
 		if progress:
-			progbar.increment_bar()
+			WLS.call_deferred('increment_lookup_bar')
 	if progress:
-		progbar.hack_fill_bar()
+		#WLS.call_deferred('hack_fill_lookup_bar')
+		pass
 	print(lkup)
 	hgtmap_tbl = lkup
 	
-func first_pass_terrain(hgtmaptable, hgtmap, progbar=null):
-	var deeptiles = []
-	var medtiles = []
-	var shallowtiles = []
+func first_pass_terrain(placeholder):
+	if progress:
+		WLS.call_deferred('setup_firstpass_bar', 'Initial Terrain Generation', 0, width * height)
 	
 	# first pass build the basic terrain
 	for x in range(width):
 		for y in range(height):
-			for vl in hgtmaptable:
-				if hgtmap[x][y] >= vl:
-					Map.set_cellv(Vector2(x, y), hgtmaptable.bsearch(vl))
+			if progress:
+				WLS.call_deferred('increment_firstpass_bar')
+			for vl in hgtmap_tbl:
+				if hgtmap[0][x][y] >= vl:
+					Map.call_deferred('set_cellv', Vector2(x, y), hgtmap_tbl.bsearch(vl))
 				else:
 					# get here the time after you find the right tile to use, index - 1 is the right tile
-					if hgtmaptable.bsearch(vl) - 1 == 0:
+					if hgtmap_tbl.bsearch(vl) - 1 == 0:
 						deeptiles.append(Vector2(x, y))
-					elif hgtmaptable.bsearch(vl) - 1 == 1:
+					elif hgtmap_tbl.bsearch(vl) - 1 == 1:
 						medtiles.append(Vector2(x, y))
-					elif hgtmaptable.bsearch(vl) - 1 == 2:
+					elif hgtmap_tbl.bsearch(vl) - 1 == 2:
 						shallowtiles.append(Vector2(x, y))
 					break
-				if progbar != null:
-					progbar.increment_bar()
 	if progress:
-		progbar.hack_fill_bar()
-	return [deeptiles, medtiles, shallowtiles]
+		#WLS.call_deferred('hack_fill_firstpass_bar')
+		pass
 
 func get_border_deepest(deeptiles, medtiles, shallowtiles):
 	# get the closest to the border deep tiles, 
@@ -263,8 +291,8 @@ func get_nondeepwater_neighbors(pt):
 		
 	# make sure neighbors aren't deep water (so you don't just create pools in river algorithm
 	#for pt in neighbors.keys():
-	#	if Map.get_cellv(neighbors[pt]) == 0:
-	#		neighbors.erase(pt)
+		#if Map.get_cellv(neighbors[pt]) == 0:
+			#neighbors.erase(pt)
 	return neighbors
 	
 func get_neighbor_heights(neighbors, hgtmap):
@@ -276,10 +304,16 @@ func get_neighbor_heights(neighbors, hgtmap):
 		neighbor_hts[hgt] = pt
 	return neighbor_hts
 	
-func river_wander(hgtmap, startpt, endpt, progbar=null):
+func river_wander(pts):
+	var startpt = pts[0]
+	var endpt = pts[1]
+	
 	var new_startpt = startpt
 	var moved_to = Vector2()
 	var history = []
+	
+	if progress:
+		WLS.call_deferred('setup_rivergen_bar', 'Find River Path', 0, width + height)
 	
 	# parameters for the algorithm
 	var override_hgts = 2  # 
@@ -290,7 +324,7 @@ func river_wander(hgtmap, startpt, endpt, progbar=null):
 		
 		# get all the neighbors for startpt, just the orthogonal
 		var neighbors = get_nondeepwater_neighbors(new_startpt)
-		var neighbor_hts = get_neighbor_heights(neighbors, hgtmap)
+		var neighbor_hts = get_neighbor_heights(neighbors, hgtmap[0])
 		
 		# force direction towards endpt
 		var ideal_direction = new_startpt.direction_to(endpt).normalized().round()
@@ -324,14 +358,15 @@ func river_wander(hgtmap, startpt, endpt, progbar=null):
 			moved_to = new_startpt + ideal_direction
 
 		new_startpt = moved_to
-		Map.set_cellv(moved_to, 0)
+		Map.call_deferred('set_cellv', moved_to, 0)
 		history.append(moved_to)
 		
-		if progbar != null:
-			progbar.increment_bar()
+		if progress:
+			WLS.call_deferred('increment_rivergen_bar')
 	if progress:
-		progbar.hack_fill_bar()
-	return history
+		#WLS.call_deferred('hack_fill_rivergen_bar')
+		pass
+	rivertiles = history
 	
 func expand_river(rivertiles, expandtiles, mag_inc):
 	var ct = 0
@@ -367,37 +402,41 @@ func expand_river(rivertiles, expandtiles, mag_inc):
 		for x in rotatedslope.x:
 			for y in rotatedslope.y:
 				if check_tile_in_map(Vector2(til.x + x, til.y)) and !(Vector2(til.x + x, til.y) in expandtiles):
-					if (Map.get_cellv(Vector2(til.x + x, til.y)) != 0):
+					if (Map.call_deferred('get_cellv', Vector2(til.x + x, til.y)) != 0):
 						expandtiles.append(Vector2(til.x + x, til.y))
 						#Map.set_cellv(Vector2(til.x + x, til.y), Map.get_cellv(Vector2(til.x + x, til.y)) - 1)
-						Map.set_cellv(Vector2(til.x + x, til.y), 0)
+						Map.call_deferred('set_cellv', Vector2(til.x + x, til.y), 0)
 				if check_tile_in_map(Vector2(til.x, til.y + y)) and !(Vector2(til.x, til.y + y) in expandtiles):
-					if (Map.get_cellv(Vector2(til.x, til.y + y)) != 0):
+					if (Map.call_deferred('get_cellv', Vector2(til.x, til.y + y)) != 0):
 						expandtiles.append(Vector2(til.x, til.y + y))
 						#Map.set_cellv(Vector2(til.x, til.y + y), Map.get_cellv(Vector2(til.x, til.y + y)) - 1)
-						Map.set_cellv(Vector2(til.x, til.y + y), 0)
+						Map.call_deferred('set_cellv', Vector2(til.x, til.y + y), 0)
 				if check_tile_in_map(Vector2(til.x - x, til.y)) and !(Vector2(til.x - x, til.y) in expandtiles):
-					if (Map.get_cellv(Vector2(til.x - x, til.y)) != 0):
+					if (Map.call_deferred('get_cellv', Vector2(til.x - x, til.y)) != 0):
 						expandtiles.append(Vector2(til.x - x, til.y))
 						#Map.set_cellv(Vector2(til.x - x, til.y), Map.get_cellv(Vector2(til.x - x, til.y)) - 1)
-						Map.set_cellv(Vector2(til.x - x, til.y), 0)
+						Map.call_deferred('set_cellv', Vector2(til.x - x, til.y), 0)
 				if check_tile_in_map(Vector2(til.x, til.y - y)) and !(Vector2(til.x, til.y - y) in expandtiles):
-					if (Map.get_cellv(Vector2(til.x, til.y - y)) != 0):
+					if (Map.call_deferred('get_cellv', Vector2(til.x, til.y - y)) != 0):
 						expandtiles.append(Vector2(til.x, til.y - y))
 						#Map.set_cellv(Vector2(til.x, til.y - y), Map.get_cellv(Vector2(til.x, til.y - y)) - 1)
-						Map.set_cellv(Vector2(til.x, til.y - y), 0)
+						Map.call_deferred('set_cellv', Vector2(til.x, til.y - y), 0)
 		ct += 1
 
 	return expandtiles
 	
-func expand_river_v2(rivertiles, mag_inc, midexpand, shallexpand, progbar):
-	var deeprivtiles = []
-	var medrivtiles = []
-	var shallrivtiles = []
-	
+func expand_river_v2(opts):
+	#OS.delay_msec(10000)
+	var mag_inc = opts[0]
+	var midexpand = opts[1]
+	var shallexpand = opts[2]
+
 	var factr = mag_inc
 	var mid_factr = mag_inc
 	var shall_factr = mag_inc
+	
+	if progress:
+		WLS.call_deferred('setup_riverwiden_bar', 'Expand River', 0, len(rivertiles) * mag_inc * 40)
 	
 	var ct = 0
 	for til in rivertiles:
@@ -419,16 +458,16 @@ func expand_river_v2(rivertiles, mag_inc, midexpand, shallexpand, progbar):
 			newtils.append(til + Vector2(-1 * (f + 1), -1 * (f + 1)))
 			newtils.append(til + Vector2(0, -1 * (f + 1)))
 			newtils.append(til + Vector2(1 * (f + 1), -1 * (f + 1)))
-
+		
 		for newt in newtils:
 			if check_tile_in_map(newt) and !(newt in rivertiles) and !(newt in deeprivtiles):
 				# smooth out edge of deeprivtiles by only accepting tiles with neighbors of same type
 				if len(find_tile_neighbors_same_type(newt, 0)) >= 3:
 					deeprivtiles.append(newt)
 					#Map.set_cellv(Vector2(til.x, til.y - y), Map.get_cellv(Vector2(til.x, til.y - y)) - 1)
-					Map.set_cellv(newt, 0)
-			if progbar != null:
-				progbar.increment_bar()
+					Map.call_deferred('set_cellv', newt, 0)
+			if progress:
+				WLS.call_deferred('increment_riverwiden_bar')
 		if debug:
 			print('New deep river tiles: ' + str(deeprivtiles))
 		
@@ -450,11 +489,11 @@ func expand_river_v2(rivertiles, mag_inc, midexpand, shallexpand, progbar):
 				if check_tile_in_map(newt) and !(newt in rivertiles) and !(newt in deeprivtiles) and !(newt in medrivtiles):
 					#if (len(find_tile_neighbors_same_type(newt, 0)) >= 3):
 					medrivtiles.append(newt)
-				if progbar != null:
-					progbar.increment_bar()
+				if progress:
+					WLS.call_deferred('increment_riverwiden_bar')
 			# have to do a second pass, so that your check for nearby tiles isn't affected by you changing the tile type
 			for medt in medrivtiles:
-				Map.set_cellv(medt, 1)
+				Map.call_deferred('set_cellv', medt, 1)
 			if debug:
 				print('medfactr: ' + str(mid_factr))
 				print('New medium river tiles: ' + str(medrivtiles))
@@ -477,11 +516,11 @@ func expand_river_v2(rivertiles, mag_inc, midexpand, shallexpand, progbar):
 				if check_tile_in_map(newt) and !(newt in rivertiles) and !(newt in deeprivtiles) and !(newt in medrivtiles) and !(newt in shallrivtiles):
 					#if (len(find_tile_neighbors_same_type(newt, 1)) >= 3):
 					shallrivtiles.append(newt)
-				if progbar != null:
-					progbar.increment_bar()
+				if progress:
+					WLS.call_deferred('increment_riverwiden_bar')
 			# have to do a second pass, so that your check for nearby tiles isn't affected by you changing the tile type
 			for medt in shallrivtiles:
-				Map.set_cellv(medt, 2)
+				Map.call_deferred('set_cellv', medt, 2)
 			if debug:
 				print('shallfactr: ' + str(shall_factr))
 				print('New shallow river tiles: ' + str(shallrivtiles))
@@ -492,23 +531,15 @@ func expand_river_v2(rivertiles, mag_inc, midexpand, shallexpand, progbar):
 	print('expand: ' + str(len(medrivtiles)) + ' new medium river tiles')
 	print('expand: ' + str(len(shallrivtiles)) + ' new shallow river tiles')
 	
-	if progbar != null:
-		progbar.hack_fill_bar()
-	return [deeprivtiles, medrivtiles, shallrivtiles] 
+	if progress:
+		WLS.call_deferred('hack_fill_riverwiden_bar')
 
-func build_world_texture(hgtmaptable, hgtmap):
+func build_world_texture(placeholder):
 	Map.clear()
 	
-	if progress:
-		progbar = $world_loading_screen/bars/firstpassterrainbar
-		progbar.setup_bar('Initial Terrain Generation', 0, width * height * len(hgtmaptable))
-	else:
-		progbar = null
-	var tls = first_pass_terrain(hgtmaptable, hgtmap, progbar)
-	var deeptiles = tls[0]
-	var medtiles = tls[1]
-	var shallowtiles = tls[2]
-	
+	var thread_fp = Thread.new()
+	thread_fp.start(self, "first_pass_terrain", null)
+	thread_fp.wait_to_finish()
 	
 	if deeptiles:
 		var brder_deepest = get_border_deepest(deeptiles, medtiles, shallowtiles)
@@ -536,25 +567,14 @@ func build_world_texture(hgtmaptable, hgtmap):
 		print('end ' + str(end_pt))
 		
 		# then just connect them following the height map
-		var expandtiles = []
-		if progress:
-			progbar = $world_loading_screen/bars/rivergenbar
-			progbar.setup_bar('Find River Path', 0, width + height)
-		else:
-			progbar = null
-		var rivertiles = river_wander(hgtmap, start_pt, end_pt, progbar)
+		var thread_wander = Thread.new()
+		thread_wander.start(self, "river_wander", [start_pt, end_pt])
+		thread_wander.wait_to_finish()
 		
 		var mag_river = 4
-		if progress:
-			progbar = $world_loading_screen/bars/riverwidenbar
-			progbar.setup_bar('Expand River', 0, len(rivertiles) * mag_river)
-		else:
-			progbar = null
-		var tilesarr = expand_river_v2(rivertiles, mag_river, true, true, progbar)
-		
-		var deeprivtiles = tilesarr[0]
-		var medrivtiles = tilesarr[1]
-		var shallrivtiles = tilesarr[2]
+		var thread_ex = Thread.new()
+		thread_ex.start(self, "expand_river_v2", [mag_river, true, true])
+		thread_ex.wait_to_finish()
 		
 		# get the three biggest concentrations of deepwater
 		var temphgt = []
@@ -563,15 +583,15 @@ func build_world_texture(hgtmaptable, hgtmap):
 		var deepest_tls_location = []
 	    # get the deepest three spots first
 		for tls in deeptiles:
-			temphgt = hgtmap[tls.x][tls.y]
+			temphgt = hgtmap[0][tls.x][tls.y]
 			deepest_tls.append(temphgt)
 			
 		deepest_tls_sorted = deepest_tls.duplicate()
 		deepest_tls_sorted.sort()
-			#for spts in deepspots:
-				# check if deeptile is deeper than previously logged deepspots and also separated from them
-			#	if (temphgt < hgtmap[spts.x][spts.y]) and tls.distance_to(spts) > 5:
-					
+		emit_signal('worldcreated')
+		#for spts in deepspots:
+		# check if deeptile is deeper than previously logged deepspots and also separated from them
+		#	if (temphgt < hgtmap[0][spts.x][spts.y]) and tls.distance_to(spts) > 5:
 
 func check_neighbors(cell, unvisited):
 	var list = []
@@ -584,11 +604,11 @@ func make_maze():
 	var unvisited = []
 	var stack = []
 	
-	Map.clear()
+	Map.call_deferred('clear')
 	for x in range(width):
 		for y in range(height):
 			unvisited.append(Vector2(x, y))
-			Map.set_cellv(Vector2(x, y), N|E|S|W)
+			Map.call_deferred('set_cellv', Vector2(x, y), N|E|S|W)
 	var current = Vector2(0, 0)
 	unvisited.erase(current)
 	
@@ -599,10 +619,10 @@ func make_maze():
 			var next = neighbors[randi() % neighbors.size()]
 			stack.append(current)
 			var dir = next-current    # direction vector for direction moved in
-			var current_walls = Map.get_cellv(current) - cell_walls[dir]      # remove the wall for the direction moved into new cell
-			var next_walls = Map.get_cellv(next) - cell_walls[-dir]         # remove the wall for the direction moved from old cell
-			Map.set_cellv(current, current_walls)
-			Map.set_cellv(next, next_walls)
+			var current_walls = Map.call_deferred('get_cellv', current) - cell_walls[dir]      # remove the wall for the direction moved into new cell
+			var next_walls = Map.call_deferred('get_cellv', next) - cell_walls[-dir]         # remove the wall for the direction moved from old cell
+			Map.call_deferred('set_cellv', current, current_walls)
+			Map.call_deferred('set_cellv', next, next_walls)
 			current = next
 			unvisited.erase(current)
 		elif stack:

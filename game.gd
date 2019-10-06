@@ -13,3 +13,4 @@ func start_game():
 
 func startworld():
 	$world_loading_screen.visible = false
+	$worldgen/customcamera.target_zoom = .5

@@ -1,5 +1,8 @@
 extends Node
 
+# just trying to clear out all these 'declared but never emitted' warnings...
+var emit_if_true = false
+
 
 const ABORTED = 0           # Action's execution code has encountered an unsolvable state, aborting execution
 const CONTINUED = 1         # Action's execution code has run successfully, but the action is not done yet
@@ -26,6 +29,12 @@ var preconditions = {}
 # General stuff
 
 func _ready():
+	if emit_if_true:
+		emit_signal("aborted")
+		emit_signal("completed")
+		emit_signal("ended")
+		print(agent)
+		print(entity)
 	call_deferred("setup_common")
 	
 func execute_common():

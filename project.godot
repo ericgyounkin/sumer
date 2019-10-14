@@ -21,7 +21,8 @@ config/icon="res://icon.png"
 
 [autoload]
 
-general_global="*res://general_global.gd"
+GOAP_CACHE="*res://goap/goap_cache.gd"
+global="*res://global.gd"
 
 [display]
 
@@ -32,9 +33,13 @@ window/size/height=1080
 
 enabled=PoolStringArray( "GodotTIE" )
 
+[global]
+
+message=false
+
 [memory]
 
-limits/message_queue/max_size_kb=65536
+limits/message_queue/max_size_kb=10000000
 
 [rendering]
 

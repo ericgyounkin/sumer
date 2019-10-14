@@ -9,48 +9,46 @@ anchor_bottom = 1.0
 script = ExtResource( 1 )
 
 [node name="ColorRect" type="ColorRect" parent="."]
-margin_left = -6400.0
-margin_right = 6400.0
-margin_bottom = 6400.0
+margin_right = 1920.0
+margin_bottom = 1080.0
 color = Color( 0, 0, 0, 0.764706 )
 
 [node name="bars" type="VBoxContainer" parent="."]
-margin_left = -6400.0
-margin_right = 6400.0
-margin_bottom = 6400.0
-rect_scale = Vector2( 10, 10 )
+margin_right = 1920.0
+margin_bottom = 1080.0
+rect_scale = Vector2( 2, 2 )
 
 [node name="heightmapbar" parent="bars" instance=ExtResource( 2 )]
 anchor_right = 0.0
 anchor_bottom = 0.0
 margin_top = 0.0
-margin_right = 12800.0
+margin_right = 1920.0
 margin_bottom = 43.0
 
 [node name="lookuptablebar" parent="bars" instance=ExtResource( 2 )]
 anchor_right = 0.0
 anchor_bottom = 0.0
 margin_top = 47.0
-margin_right = 12800.0
+margin_right = 1920.0
 margin_bottom = 90.0
 
 [node name="firstpassterrainbar" parent="bars" instance=ExtResource( 2 )]
 anchor_right = 0.0
 anchor_bottom = 0.0
 margin_top = 94.0
-margin_right = 12800.0
+margin_right = 1920.0
 margin_bottom = 137.0
 
 [node name="rivergenbar" parent="bars" instance=ExtResource( 2 )]
 anchor_right = 0.0
 anchor_bottom = 0.0
 margin_top = 141.0
-margin_right = 12800.0
+margin_right = 1920.0
 margin_bottom = 184.0
 
 [node name="riverwidenbar" parent="bars" instance=ExtResource( 2 )]
 anchor_right = 0.0
 anchor_bottom = 0.0
 margin_top = 188.0
-margin_right = 12800.0
+margin_right = 1920.0
 margin_bottom = 231.0

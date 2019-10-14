@@ -1,7 +1,7 @@
 extends "res://goap/goap_action.gd"
 
 # Copied and modified by specific actions
-var pause = 5
+#var pause = 5
 
 func return_gangleader_move():
 	var move_offset = Vector2()

@@ -1,7 +1,7 @@
 extends "res://goap/goap_action.gd"
 
 # Copied and modified by specific actions
-var pause = 1
+#var pause = 1
 
 func setup():
 	

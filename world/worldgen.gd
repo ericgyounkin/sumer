@@ -1,6 +1,7 @@
 extends Node2D
 
 var debug = false
+var benchmark = true
 
 const N = 1
 const E = 2
@@ -10,17 +11,18 @@ const W = 8
 var cell_walls = {Vector2(0, -1): N, Vector2(1, 0): E, Vector2(0, 1): S, Vector2(-1, 0): W}
 
 var tile_size
-var width = 200
-var height = 200
+var width
+var height
+var riverwidth
 
 onready var Map = $TileMap
-onready var WLS = get_parent().get_node('world_loading_screen')
+onready var WLS = get_parent().get_node('CanvasLayer/world_loading_screen')
 
 var progress = true
 
 var skip_extra_wheel = false
 
-signal updateprogbars
+#signal updateprogbars
 signal worldcreated
 
 #var genned = false
@@ -43,11 +45,15 @@ var shallrivtiles = []
 func _ready():
 	randomize()
 	tile_size = Map.cell_size
-	if WLS:
-		connect("updateprogbars", WLS, "updatebars")
-	connect('worldcreated', get_parent(), 'startworld')
+	#if WLS:
+		#connect("updateprogbars", WLS, "updatebars")
+	var status = connect('worldcreated', get_parent(), 'startworld')
+	print('world_created_status ' + str(status))
 
 func create_new_world(placeholder):
+	if placeholder != null:
+		print('attempting to use unexpected argument in create_new_world')
+	
 	var thread_simp = Thread.new()
 	thread_simp.start(self, "generate_simplexnoise_heightmap", null)
 	thread_simp.wait_to_finish()
@@ -59,6 +65,9 @@ func create_new_world(placeholder):
 	var thread_world = Thread.new()
 	thread_world.start(self, "build_world_texture", null)
 	thread_world.wait_to_finish()
+	
+	emit_signal('worldcreated')
+	return
 
 func _unhandled_input(event):
 	if event is InputEventMouseButton:
@@ -102,7 +111,9 @@ func find_tile_neighbors_same_type(til, override_tile_type=null):
 				sametype.append(nbr)
 	return sametype
 	
-func generate_simplexnoise_heightmap(null):
+func generate_simplexnoise_heightmap(placeholder):
+	if placeholder != null:
+		print('attempting to use unexpected argument in create_new_world')
 	if progress:
 		WLS.call_deferred('setup_heightmap_bar', 'Generate Heightmap', 0, width * 2)
 		#WLS.setup_heightmap_bar('Generate Heightmap', 0, width * height * 2)
@@ -163,9 +174,15 @@ func generate_oasis_tile_lookup(maxval, minval):
 		lkup.append(wrkingval)
 		wrkingval += indx
 		indx /= 2
+		# have to use 'i' to get it out of the errors list...
+		if i == 100000:
+			print(i)
+			
 	return lkup
 	
 func generate_desert_tile_lookup(placeholder):
+	if placeholder != null:
+		print('attempting to use unexpected argument in create_new_world')
 	var maxval = hgtmap[2]
 	var minval = hgtmap[1]
 	
@@ -175,7 +192,7 @@ func generate_desert_tile_lookup(placeholder):
 	# Want nine categories for the nine types of tiles
 	var totalrange = maxval - minval
 
-	var indx = (totalrange / 9) / 1.9
+	var indx = (totalrange / 9) / 4.9
 	var lkup = Array()
 
 	var wrkingval = minval
@@ -186,6 +203,10 @@ func generate_desert_tile_lookup(placeholder):
 		wrkingval += indx
 		if progress:
 			WLS.call_deferred('increment_lookup_bar')
+		# have to use 'i' to get it out of the errors list...
+		if i == 100000:
+			print(i)
+			
 	if progress:
 		#WLS.call_deferred('hack_fill_lookup_bar')
 		pass
@@ -193,6 +214,8 @@ func generate_desert_tile_lookup(placeholder):
 	hgtmap_tbl = lkup
 	
 func first_pass_terrain(placeholder):
+	if placeholder != null:
+		print('attempting to use unexpected argument in create_new_world')
 	if progress:
 		WLS.call_deferred('setup_firstpass_bar', 'Initial Terrain Generation', 0, width * height)
 	
@@ -379,8 +402,8 @@ func expand_river(rivertiles, expandtiles, mag_inc):
 		# its a problem of calculating slope of the line and then getting a perpendicular
 		#    want to widen along the perpendicular
 		var cur_idx = ct
-		var prevtil = rivertiles[cur_idx - 1]
-		var nexttil = rivertiles[cur_idx + 1]
+		#var prevtil = rivertiles[cur_idx - 1]
+		#var nexttil = rivertiles[cur_idx + 1]
 		var wayback_til = rivertiles[cur_idx - 2]
 		var wayforward_til = rivertiles[cur_idx + 2]
 		
@@ -435,10 +458,21 @@ func expand_river_v2(opts):
 	var mid_factr = mag_inc
 	var shall_factr = mag_inc
 	
+	var deeptile_generation_benchmark = 0
+	var deeptile_validation_benchmark = 0
+	var medtile_generation_benchmark = 0
+	var medtile_validation_benchmark = 0
+	var shalltile_generation_benchmark = 0
+	var shalltile_validation_benchmark = 0
+	var shalltile_settile_benchmark = 0
+	var starttime = 0
+	var endtime = 0
+	if benchmark:
+		print('running expand_river_v2 with benchmarking enabled...')
+	
 	if progress:
 		WLS.call_deferred('setup_riverwiden_bar', 'Expand River', 0, len(rivertiles) * mag_inc * 40)
 	
-	var ct = 0
 	for til in rivertiles:
 		# determine block size
 		var rnge = int(factr * 2)
@@ -448,6 +482,8 @@ func expand_river_v2(opts):
 			print('deepfactr: ' + str(factr))
 		
 		# just draw a big block around each river tile, fuck it
+		if benchmark:
+			starttime = OS.get_ticks_msec()
 		var newtils = []
 		for f in range(factr):
 			newtils.append(til + Vector2(-1 * (f + 1), 1 * (f + 1)))
@@ -458,7 +494,12 @@ func expand_river_v2(opts):
 			newtils.append(til + Vector2(-1 * (f + 1), -1 * (f + 1)))
 			newtils.append(til + Vector2(0, -1 * (f + 1)))
 			newtils.append(til + Vector2(1 * (f + 1), -1 * (f + 1)))
+		if benchmark:
+			endtime = OS.get_ticks_msec()
+			deeptile_generation_benchmark += endtime - starttime
 		
+		if benchmark:
+			starttime = OS.get_ticks_msec()
 		for newt in newtils:
 			if check_tile_in_map(newt) and !(newt in rivertiles) and !(newt in deeprivtiles):
 				# smooth out edge of deeprivtiles by only accepting tiles with neighbors of same type
@@ -470,11 +511,16 @@ func expand_river_v2(opts):
 				WLS.call_deferred('increment_riverwiden_bar')
 		if debug:
 			print('New deep river tiles: ' + str(deeprivtiles))
+		if benchmark:
+			endtime = OS.get_ticks_msec()
+			deeptile_validation_benchmark += endtime - starttime
 		
 	if midexpand:
 		for til in deeprivtiles:
 			# draw in the middle tiles
 			var newtils = []
+			if benchmark:
+				starttime = OS.get_ticks_msec()
 			for f in range(mid_factr):
 				newtils.append(til + Vector2(-1 * (f + 1), 1 * (f + 1)))
 				newtils.append(til + Vector2(0, 1 * (f + 1)))
@@ -484,7 +530,12 @@ func expand_river_v2(opts):
 				newtils.append(til + Vector2(-1 * (f + 1), -1 * (f + 1)))
 				newtils.append(til + Vector2(0, -1 * (f + 1)))
 				newtils.append(til + Vector2(1 * (f + 1), -1 * (f + 1)))
+			if benchmark:
+				endtime = OS.get_ticks_msec()
+				medtile_generation_benchmark += endtime - starttime
 			
+			if benchmark:
+				starttime = OS.get_ticks_msec()
 			for newt in newtils:
 				if check_tile_in_map(newt) and !(newt in rivertiles) and !(newt in deeprivtiles) and !(newt in medrivtiles):
 					#if (len(find_tile_neighbors_same_type(newt, 0)) >= 3):
@@ -497,11 +548,16 @@ func expand_river_v2(opts):
 			if debug:
 				print('medfactr: ' + str(mid_factr))
 				print('New medium river tiles: ' + str(medrivtiles))
+			if benchmark:
+				endtime = OS.get_ticks_msec()
+				medtile_validation_benchmark += endtime - starttime
 				
 	if shallexpand:
 		for til in medrivtiles:
 			# draw in the shallow tiles
 			var newtils = []
+			if benchmark:
+				starttime = OS.get_ticks_msec()
 			for f in range(shall_factr):
 				newtils.append(til + Vector2(-1 * (f + 1), 1 * (f + 1)))
 				newtils.append(til + Vector2(0, 1 * (f + 1)))
@@ -511,30 +567,52 @@ func expand_river_v2(opts):
 				newtils.append(til + Vector2(-1 * (f + 1), -1 * (f + 1)))
 				newtils.append(til + Vector2(0, -1 * (f + 1)))
 				newtils.append(til + Vector2(1 * (f + 1), -1 * (f + 1)))
+			if benchmark:
+				endtime = OS.get_ticks_msec()
+				shalltile_generation_benchmark += endtime - starttime
 			
+			if benchmark:
+				starttime = OS.get_ticks_msec()
 			for newt in newtils:
 				if check_tile_in_map(newt) and !(newt in rivertiles) and !(newt in deeprivtiles) and !(newt in medrivtiles) and !(newt in shallrivtiles):
 					#if (len(find_tile_neighbors_same_type(newt, 1)) >= 3):
 					shallrivtiles.append(newt)
 				if progress:
 					WLS.call_deferred('increment_riverwiden_bar')
+			if benchmark:
+				endtime = OS.get_ticks_msec()
+				shalltile_validation_benchmark += endtime - starttime
+			
+			if benchmark:
+				starttime = OS.get_ticks_msec()
 			# have to do a second pass, so that your check for nearby tiles isn't affected by you changing the tile type
 			for medt in shallrivtiles:
 				Map.call_deferred('set_cellv', medt, 2)
 			if debug:
 				print('shallfactr: ' + str(shall_factr))
 				print('New shallow river tiles: ' + str(shallrivtiles))
-	ct += 1
-	if ct == 5 and debug:
-		return [deeprivtiles, medrivtiles, shallrivtiles]
+			if benchmark:
+				endtime = OS.get_ticks_msec()
+				shalltile_settile_benchmark += endtime - starttime
+
 	print('expand: ' + str(len(deeprivtiles)) + ' new deep river tiles')
 	print('expand: ' + str(len(medrivtiles)) + ' new medium river tiles')
 	print('expand: ' + str(len(shallrivtiles)) + ' new shallow river tiles')
+	if benchmark:
+		print('Time spent on deep river tile generation: ' + str(deeptile_generation_benchmark) + 'ms')
+		print('Time spent on deep river tile validation: ' + str(deeptile_validation_benchmark) + 'ms')
+		print('Time spent on medium river tile generation: ' + str(medtile_generation_benchmark) + 'ms')
+		print('Time spent on medium river tile validation: ' + str(medtile_validation_benchmark) + 'ms')
+		print('Time spent on shallow river tile generation: ' + str(shalltile_generation_benchmark) + 'ms')
+		print('Time spent on shallow river tile validation: ' + str(shalltile_validation_benchmark) + 'ms')
+		print('Time spent on shallow river tile setting: ' + str(shalltile_settile_benchmark) + 'ms')
 	
 	if progress:
 		WLS.call_deferred('hack_fill_riverwiden_bar')
 
 func build_world_texture(placeholder):
+	if placeholder != null:
+		print('attempting to use unexpected argument in create_new_world')
 	Map.clear()
 	
 	var thread_fp = Thread.new()
@@ -571,16 +649,16 @@ func build_world_texture(placeholder):
 		thread_wander.start(self, "river_wander", [start_pt, end_pt])
 		thread_wander.wait_to_finish()
 		
-		var mag_river = 4
 		var thread_ex = Thread.new()
-		thread_ex.start(self, "expand_river_v2", [mag_river, true, true])
+		thread_ex.start(self, "expand_river_v2", [riverwidth, true, true])
 		thread_ex.wait_to_finish()
 		
 		# get the three biggest concentrations of deepwater
 		var temphgt = []
 		var deepest_tls = []
 		var deepest_tls_sorted = []
-		var deepest_tls_location = []
+		#var deepest_tls_location = []
+		
 	    # get the deepest three spots first
 		for tls in deeptiles:
 			temphgt = hgtmap[0][tls.x][tls.y]
@@ -588,7 +666,8 @@ func build_world_texture(placeholder):
 			
 		deepest_tls_sorted = deepest_tls.duplicate()
 		deepest_tls_sorted.sort()
-		emit_signal('worldcreated')
+		
+		return
 		#for spts in deepspots:
 		# check if deeptile is deeper than previously logged deepspots and also separated from them
 		#	if (temphgt < hgtmap[0][spts.x][spts.y]) and tls.distance_to(spts) > 5:

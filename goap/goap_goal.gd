@@ -1,5 +1,7 @@
 extends Node
 
+# just trying to clear out all these 'declared but never emitted' warnings...
+var emit_if_true = false
 
 const TYPE_CRITICAL = 0            # This goal / symbol is always checked against when formulating a plan as it is crucial to the entity's nature and health
 const TYPE_NORMAL = 1              # This goal / symbol may be pushed back if there can't be a plan formulated for it to let other goals come into consideration
@@ -23,6 +25,10 @@ var type = TYPE_NORMAL             # Defines goal type.  See constants
 
 
 func _ready():
+	# throwing something in here to juts to clear the 'declared by never used warning things'
+	if emit_if_true:
+		print(entity)
+	
 	call_deferred('setup_common')
 	
 func setup_common():

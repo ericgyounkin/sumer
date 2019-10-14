@@ -30,8 +30,8 @@ func evaluate():
 	angletoplyr = rslts[1]
 	if currentplyr != null:
 		return {'s_listen_in': false}
-		return {'s_enable_conversation': false}
-		return {'s_disable_conversation': false}
+		#return {'s_enable_conversation': false}
+		#return {'s_disable_conversation': false}
 
 
 func on_completion():

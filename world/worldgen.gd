@@ -156,6 +156,7 @@ func generate_simplexnoise_heightmap(placeholder):
 		#WLS.call_deferred('hack_fill_heightmap_bar')
 		pass
 	hgtmap = [hgtmap, outputlow, outputhigh]
+	
 	#var img = noise.get_image(1026,600)
 	#var txture = ImageTexture.new()
 	#txture.create_from_image(img)
@@ -326,6 +327,16 @@ func get_neighbor_heights(neighbors, hgtmap):
 		var hgt = hgtmap[loc.x][loc.y]
 		neighbor_hts[hgt] = pt
 	return neighbor_hts
+	
+func return_highest_point():
+	var max_height = -999
+	var max_height_loc = Vector2()
+	for x in range(width):
+		for y in range(height):
+			if hgtmap[0][x][y] > max_height:
+				max_height = hgtmap[0][x][y]
+				max_height_loc = Vector2(x, y)
+	return max_height_loc
 	
 func river_wander(pts):
 	var startpt = pts[0]
@@ -594,6 +605,17 @@ func expand_river_v2(opts):
 			if benchmark:
 				endtime = OS.get_ticks_msec()
 				shalltile_settile_benchmark += endtime - starttime
+				
+	# rebuild rivertiles to include all water tiles
+	for til in deeprivtiles:
+		if !(til in rivertiles):
+			rivertiles.append(til)
+	for til in medrivtiles:
+		if !(til in rivertiles):
+			rivertiles.append(til)
+	for til in shallrivtiles:
+		if !(til in rivertiles):
+			rivertiles.append(til)
 
 	print('expand: ' + str(len(deeprivtiles)) + ' new deep river tiles')
 	print('expand: ' + str(len(medrivtiles)) + ' new medium river tiles')

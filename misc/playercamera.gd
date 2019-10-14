@@ -1,8 +1,10 @@
 extends Camera2D
 
+# just trying to clear out all these 'declared but never emitted' warnings...
+var emit_if_true = false
 
 var startzoom = 8
-var maxzoom = 8
+var maxzoom = 15
 var minzoom = .5
 var convzoom = 1.75
 var zoomincrement = 0.25
@@ -21,6 +23,10 @@ var enablemove = false
 
 func _ready():
 	set_zoom(Vector2(startzoom, startzoom))
+	if emit_if_true:
+		print(maxzoom)
+		print(minzoom)
+		print(zoomincrement)
 
 func _process(delta):
 	if smooth_zoom != target_zoom:

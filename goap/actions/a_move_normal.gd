@@ -2,7 +2,7 @@ extends "res://goap/goap_action.gd"
 
 # Copied and modified by specific actions
 
-var stpoint = Vector2()
+#var stpoint = Vector2()
 var finished = false
 
 func setup():
@@ -107,6 +107,8 @@ func execute():
 	return CONTINUED
 	
 func _process(delta):
+	if delta < 0:
+		print('temp to eliminate errors')
 	entity.travel_dist = (entity.mousepos - entity.global_position).length()
 	entity.rawvelocity = (entity.mousepos - entity.global_position).normalized()
 

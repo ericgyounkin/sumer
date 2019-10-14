@@ -1,7 +1,5 @@
 extends "res://goap/goap_action.gd"
 
-# Copied and modified by specific actions
-var pause = 1
 
 func setup():
 	
@@ -12,12 +10,12 @@ func setup():
 	type = TYPE_NORMAL                         # See ancestor script for type descriptions
 	
 	# Movement - use add_movement(string id)
-	add_movement('move_normal')
+	#add_movement('move_normal')
 	
 	# Preconditions - use add_precondition(string symbol, bool value)
 	
 	# Effects - use add_effect(string symbol, bool value)
-	add_effect('s_metwithclosest', true)
+	#add_effect('s_metwithclosest', true)
 	return
 
 func reset():
@@ -32,9 +30,9 @@ func evaluate():
 	# Planner calls this before resetting the action
 	# If returning true, the planner will consider this action for its current plan
 	# If returning false, the planner will not include this action in the plan for the currently inspected goal at all!
-	if agent.goals_current[0][0].get('target_closest'):
-		if agent.goals_current[0][0].get('target_closest') != null:
-			return true
+#	if agent.goals_current[0][0].get('target_closest'):
+#		if agent.goals_current[0][0].get('target_closest') != null:
+#			return true
 	return false
 	
 func get_cost():
@@ -55,25 +53,22 @@ func get_target_location():
 	#    certain location and therefore are able to return a position to move to
 
 	# Location is towards the npc, but you want to stop short
-	if entity.is_network_master():
-		var tgt = agent.goals_current[0][0].get('target_closest')
-		var offset = (tgt.global_position - entity.global_position)
-		if offset.x > 0:
-			offset.x -= 50
-		else:
-			offset.x += 50
-		if offset.y > 0:
-			offset.y -= 50
-		else:
-			offset.y += 50
-			
-		var approach_loc = entity.global_position + offset
-		
-		entity.mousepos = approach_loc
-		entity.rset('slave_mousepos', entity.mousepos)
-		if global.netdebug:
-			print('rset slave_mousepos, slave_move_speed')
-		
+#	if entity.is_network_master():
+#		var tgt = agent.goals_current[0][0].get('target_closest')
+#		var offset = (tgt.global_position - entity.global_position)
+#		if offset.x > 0:
+#			offset.x -= 50
+#		else:
+#			offset.x += 50
+#		if offset.y > 0:
+#			offset.y -= 50
+#		else:
+#			offset.y += 50
+#
+#		var approach_loc = entity.global_position + offset
+#
+#		entity.mousepos = approach_loc
+#
 	return null
 	
 func execute():

@@ -32,11 +32,15 @@ var noise
 var maxval
 var minval
 
+# first pass terrain generates these and doesnt show
+var starttils
+
 var deeptiles = []
 var medtiles = []
 var shallowtiles = []
 
 var rivertiles = []
+var greentiles = []
 var deeprivtiles = []
 var medrivtiles = []
 var shallrivtiles = []
@@ -110,6 +114,18 @@ func find_tile_neighbors_same_type(til, override_tile_type=null):
 			if Map.get_cellv(neighbors[nbr]) == tiletype:
 				sametype.append(nbr)
 	return sametype
+	
+func is_neighboring_a_river(til):
+	var neighbors = {'N': til + Vector2(0, 1), 'E': til + Vector2(1, 0),
+	                 'W': til + Vector2(-1, 0), 'S': til + Vector2(0, -1),
+					 'NE': til + Vector2(1, 1), 'SW': til + Vector2(-1, -1),
+	                 'NW': til + Vector2(-1, 1), 'SE': til + Vector2(1, -1)}
+	# search tiles and if they exist return the number of tiles that match the tiletype
+	for nbr in neighbors:
+		if rivertiles.has(nbr):
+			print('neighbor!')
+			return true
+	return false
 	
 func generate_simplexnoise_heightmap(placeholder):
 	if placeholder != null:
@@ -221,13 +237,18 @@ func first_pass_terrain(placeholder):
 		WLS.call_deferred('setup_firstpass_bar', 'Initial Terrain Generation', 0, width * height)
 	
 	# first pass build the basic terrain
+	starttils = Array()
+	starttils.resize(width)
 	for x in range(width):
+		starttils[x] = Array()
+		starttils[x].resize(height)
 		for y in range(height):
 			if progress:
 				WLS.call_deferred('increment_firstpass_bar')
 			for vl in hgtmap_tbl:
 				if hgtmap[0][x][y] >= vl:
-					Map.call_deferred('set_cellv', Vector2(x, y), hgtmap_tbl.bsearch(vl))
+					Map.call_deferred('set_cellv', Vector2(x, y), 8)
+					starttils[x][y] = hgtmap_tbl.bsearch(vl)
 				else:
 					# get here the time after you find the right tile to use, index - 1 is the right tile
 					if hgtmap_tbl.bsearch(vl) - 1 == 0:
@@ -331,16 +352,96 @@ func get_neighbor_heights(neighbors, hgtmap):
 func return_highest_point():
 	var max_height = -999
 	var max_height_loc = Vector2()
-	for x in range(width):
-		for y in range(height):
-			if hgtmap[0][x][y] > max_height:
+	for x in range(width * .25, width * .75):
+		for y in range(height * .25, height * .75):
+			if hgtmap[0][x][y] > max_height and !rivertiles.has(Vector2(x, y)):
 				max_height = hgtmap[0][x][y]
 				max_height_loc = Vector2(x, y)
-	return max_height_loc
+	return $TileMap.map_to_world(max_height_loc)
+
+func rdp_point_line_distance(point, start, end):
+	var dx = end.x - start.x
+	var dy = end.y - start.y
 	
+	#Normalize
+	var mag = pow(pow(dx, 2.0) + pow(dy, 2.0), 0.5)
+	if mag > 0.0:
+		dx = dx / mag
+		dy = dy / mag
+	
+	var pvx = point.x - start.x
+	var pvy = point.y - start.y
+	
+	var pvdot = dx * pvx + dy * pvy
+	
+	var dsx = pvdot * dx
+	var dsy = pvdot * dy
+	
+	var ax = pvx - dsx
+	var ay = pvy - dsy
+	
+	return pow(pow(ax, 2.0) + pow(ay, 2.0), 0.5)
+
+func rdp(pts, epsilon=3):
+	# Ramer-Douglas-Peucker algorithm https://github.com/sebleier/RDP/blob/master/__init__.py
+	"""
+    Reduces a series of points to a simplified version that loses detail, but
+    maintains the general shape of the series.
+    """
+	
+	if len(pts) < 2:
+		print('need more than two points!')
+		return
+	
+	var dmax = 0.0
+	var index = 0
+	var end = len(pts) - 1
+	var d
+	var results
+	
+	for i in range(1, end):
+		d = rdp_point_line_distance(pts[i], pts[0], pts[end])
+		if d > dmax:
+			index = i
+			dmax = d
+	if dmax >= epsilon:
+		var newpts = Array()
+		for i in range(0, index + 1):
+			newpts.append(pts[i])
+		var newptstwo = Array()
+		for i in range(index, end):
+			newptstwo.append(pts[i])
+		results = rdp(newpts, epsilon) + rdp(newptstwo, epsilon)
+	else:
+		results = [pts[0], pts[-1]]
+	return results
+
+func spaced_out_pts(pts, max_distance=5):
+	# Just to get all points within the same distance of each other
+	var newpts = []
+	var newpt
+	var dist = 0
+	var direct = Vector2()
+
+	var ct = 1
+	for pt in pts:
+		newpts.append(pt)
+		if ct == (len(pts) - 1):
+			break
+		dist = pt.distance_to(pts[ct])
+		direct = pt.direction_to(pts[ct]).normalized()
+		newpt = pt
+		while dist > max_distance:
+			newpt = newpt + (direct * max_distance).round()
+			newpts.append(newpt)
+			dist = newpt.distance_to(pts[ct])
+		ct += 1
+	return newpts
+
 func river_wander(pts):
 	var startpt = pts[0]
 	var endpt = pts[1]
+	var simplify = pts[2]
 	
 	var new_startpt = startpt
 	var moved_to = Vector2()
@@ -352,6 +453,7 @@ func river_wander(pts):
 	# parameters for the algorithm
 	var override_hgts = 2  # 
 	
+	history.append(startpt)
 	while moved_to != endpt:
 	#for i in range(200):
 		moved_to = Vector2()
@@ -392,15 +494,27 @@ func river_wander(pts):
 			moved_to = new_startpt + ideal_direction
 
 		new_startpt = moved_to
-		Map.call_deferred('set_cellv', moved_to, 0)
+		
 		history.append(moved_to)
 		
 		if progress:
 			WLS.call_deferred('increment_rivergen_bar')
+	
+	if simplify:
+		print('simplifying river path...')
+		var newpts = rdp(history)
+		newpts = spaced_out_pts(newpts)
+		rivertiles = newpts
+		for pts in newpts:
+			Map.call_deferred('set_cellv', pts, 0)
+	else:
+		rivertiles = history
+		for pt in history:
+			Map.call_deferred('set_cellv', pt, 0)
+		
 	if progress:
 		#WLS.call_deferred('hack_fill_rivergen_bar')
 		pass
-	rivertiles = history
 	
 func expand_river(rivertiles, expandtiles, mag_inc):
 	var ct = 0
@@ -631,9 +745,285 @@ func expand_river_v2(opts):
 	
 	if progress:
 		WLS.call_deferred('hack_fill_riverwiden_bar')
+		
+func expand_river_v3(opts):
+	var mag_inc = opts[0]
+	var midexpand = opts[1]
+	var shallexpand = opts[2]
+
+	var factr = mag_inc
+	var mid_factr = mag_inc
+	var shall_factr = mag_inc
+	
+	var deeptile_generation_benchmark = 0
+	var deeptile_validation_benchmark = 0
+	var medtile_generation_benchmark = 0
+	var medtile_validation_benchmark = 0
+	var shalltile_generation_benchmark = 0
+	var shalltile_validation_benchmark = 0
+	var shalltile_settile_benchmark = 0
+	#var starttime = 0
+	#var endtime = 0
+	if benchmark:
+		print('running expand_river_v3 with benchmarking enabled...')
+	
+	if progress:
+		WLS.call_deferred('setup_riverwiden_bar', 'Expand River', 0, len(rivertiles) * 4 * 4 * factr)
+	
+	var ct = 0
+	
+	for til in rivertiles:
+		var deepwaterfactr = factr
+		
+		if ct == len(rivertiles) - 1:
+			break
+		var nexttil = rivertiles[ct + 1]
+		
+		# get tangent directions for expansion
+		var fwddir = til.direction_to(nexttil)
+		var pos_tangent = fwddir.tangent()
+		var neg_tangent = pos_tangent.rotated(PI)
+		
+		for fact in range(deepwaterfactr):
+			for newt in [(til + pos_tangent * (fact + 1)).round(), (til + neg_tangent * (fact + 1)).round(),
+			             (til + fwddir + (pos_tangent * (fact + 1))).round(), (til + fwddir + (neg_tangent * (fact + 1))).round()]:
+				if check_tile_in_map(newt) and !(rivertiles.has(newt)) and !(deeprivtiles.has(newt)) and !(medrivtiles.has(newt)) and !(shallrivtiles.has(newt)):
+					# smooth out edge of deeprivtiles by only accepting tiles with neighbors of same type
+					deeprivtiles.append(newt)
+					#Map.set_cellv(Vector2(til.x, til.y - y), Map.get_cellv(Vector2(til.x, til.y - y)) - 1)
+					Map.call_deferred('set_cellv', newt, 0)
+				if progress:
+					WLS.call_deferred('increment_riverwiden_bar')
+			if debug:
+				print('New deep river tiles: ' + str(deeprivtiles))
+		ct += 1
+	
+	if midexpand:
+		ct = 0
+		for til in rivertiles:
+			var midwaterfactr = mid_factr
+					
+			if ct == len(rivertiles) - 1:
+				break
+			var nexttil = rivertiles[ct + 1]
+			
+			# get tangent directions for expansion
+			var fwddir = til.direction_to(nexttil)
+			var pos_tangent = fwddir.tangent()
+			var neg_tangent = pos_tangent.rotated(PI)
+			
+			for fact in range(midwaterfactr):
+				for newt in [(til + pos_tangent * (fact + 1) + (midwaterfactr * pos_tangent)).round(), (til + neg_tangent * (fact + 1) + (midwaterfactr * neg_tangent)).round(),
+							 (til + fwddir + pos_tangent * (fact + 1) + (midwaterfactr * pos_tangent)).round(), (til + fwddir + neg_tangent * (fact + 1) + (midwaterfactr * neg_tangent)).round()]:
+					if check_tile_in_map(newt) and !(rivertiles.has(newt)) and !(deeprivtiles.has(newt)) and !(medrivtiles.has(newt)) and !(shallrivtiles.has(newt)):
+						# smooth out edge of deeprivtiles by only accepting tiles with neighbors of same type
+						medrivtiles.append(newt)
+						#Map.set_cellv(Vector2(til.x, til.y - y), Map.get_cellv(Vector2(til.x, til.y - y)) - 1)
+						Map.call_deferred('set_cellv', newt, 1)
+					if progress:
+						WLS.call_deferred('increment_riverwiden_bar')
+				if debug:
+					print('New medium river tiles: ' + str(deeprivtiles))
+			
+			ct += 1
+			
+	if shallexpand and midexpand:
+		ct = 0
+		for til in rivertiles:
+			var shallwaterfactr = shall_factr
+			
+			if ct == len(rivertiles) - 1:
+				break
+			var nexttil = rivertiles[ct + 1]
+			
+			# get tangent directions for expansion
+			var fwddir = til.direction_to(nexttil)
+			var pos_tangent = fwddir.tangent()
+			var neg_tangent = pos_tangent.rotated(PI)
+			
+			for fact in range(shallwaterfactr):
+				for newt in [(til + pos_tangent * (fact + 1) + ((mid_factr + shall_factr) * pos_tangent)).round(), (til + neg_tangent * (fact + 1) + ((mid_factr + shall_factr) * neg_tangent)).round(),
+							 (til + fwddir + pos_tangent * (fact + 1) + ((mid_factr + shall_factr) * pos_tangent)).round(), (til + fwddir + neg_tangent * (fact + 1) + ((mid_factr + shall_factr) * neg_tangent)).round()]:
+					if check_tile_in_map(newt) and !(rivertiles.has(newt)) and !(deeprivtiles.has(newt)) and !(medrivtiles.has(newt)) and !(shallrivtiles.has(newt)):
+						# smooth out edge of deeprivtiles by only accepting tiles with neighbors of same type
+						shallrivtiles.append(newt)
+						#Map.set_cellv(Vector2(til.x, til.y - y), Map.get_cellv(Vector2(til.x, til.y - y)) - 1)
+						Map.call_deferred('set_cellv', newt, 2)
+					if progress:
+						WLS.call_deferred('increment_riverwiden_bar')
+				if debug:
+					print('New shall river tiles: ' + str(deeprivtiles))
+			ct += 1
+	
+		ct = 0
+		for til in rivertiles:
+			var greenfactr = shall_factr
+			
+			if ct == len(rivertiles) - 1:
+				break
+			var nexttil = rivertiles[ct + 1]
+			
+			# get tangent directions for expansion
+			var fwddir = til.direction_to(nexttil)
+			var pos_tangent = fwddir.tangent()
+			var neg_tangent = pos_tangent.rotated(PI)
+			
+			for fact in range(greenfactr):
+				for newt in [(til + pos_tangent * (fact + 1) + ((mid_factr + shall_factr + shall_factr) * pos_tangent)).round(), (til + neg_tangent * (fact + 1) + ((mid_factr + shall_factr + shall_factr) * neg_tangent)).round(),
+							 (til + fwddir + pos_tangent * (fact + 1) + ((mid_factr + shall_factr + shall_factr) * pos_tangent)).round(), (til + fwddir + neg_tangent * (fact + 1) + ((mid_factr + shall_factr + shall_factr) * neg_tangent)).round()]:
+					if check_tile_in_map(newt) and !(rivertiles.has(newt)) and !(deeprivtiles.has(newt)) and !(medrivtiles.has(newt)) and !(shallrivtiles.has(newt)):
+						# smooth out edge of deeprivtiles by only accepting tiles with neighbors of same type
+						greentiles.append(newt)
+						#Map.set_cellv(Vector2(til.x, til.y - y), Map.get_cellv(Vector2(til.x, til.y - y)) - 1)
+						Map.call_deferred('set_cellv', newt, 3)
+					if progress:
+						WLS.call_deferred('increment_riverwiden_bar')
+				if debug:
+					print('New shall river tiles: ' + str(deeprivtiles))
+			ct += 1
+					
+	# rebuild rivertiles to include all water tiles
+	for til in deeprivtiles:
+		if !(til in rivertiles):
+			rivertiles.append(til)
+	for til in medrivtiles:
+		if !(til in rivertiles):
+			rivertiles.append(til)
+	for til in shallrivtiles:
+		if !(til in rivertiles):
+			rivertiles.append(til)
+
+	print('expand: ' + str(len(deeprivtiles)) + ' new deep river tiles')
+	print('expand: ' + str(len(medrivtiles)) + ' new medium river tiles')
+	print('expand: ' + str(len(shallrivtiles)) + ' new shallow river tiles')
+	if benchmark:
+		print('Time spent on deep river tile generation: ' + str(deeptile_generation_benchmark) + 'ms')
+		print('Time spent on deep river tile validation: ' + str(deeptile_validation_benchmark) + 'ms')
+		print('Time spent on medium river tile generation: ' + str(medtile_generation_benchmark) + 'ms')
+		print('Time spent on medium river tile validation: ' + str(medtile_validation_benchmark) + 'ms')
+		print('Time spent on shallow river tile generation: ' + str(shalltile_generation_benchmark) + 'ms')
+		print('Time spent on shallow river tile validation: ' + str(shalltile_validation_benchmark) + 'ms')
+		print('Time spent on shallow river tile setting: ' + str(shalltile_settile_benchmark) + 'ms')
+	
+	if progress:
+		WLS.call_deferred('hack_fill_riverwiden_bar')
+		
+func expand_river_v4(opts):
+	var mag_inc = opts[0]
+	var midexpand = opts[1]
+	var shallexpand = opts[2]
+
+	var factr = mag_inc
+	var mid_factr = mag_inc
+	var shall_factr = mag_inc
+	
+	var deeptile_generation_benchmark = 0
+	var deeptile_validation_benchmark = 0
+	var medtile_generation_benchmark = 0
+	var medtile_validation_benchmark = 0
+	var shalltile_generation_benchmark = 0
+	var shalltile_validation_benchmark = 0
+	var shalltile_settile_benchmark = 0
+	#var starttime = 0
+	#var endtime = 0
+	if benchmark:
+		print('running expand_river_v3 with benchmarking enabled...')
+	
+	if progress:
+		WLS.call_deferred('setup_riverwiden_bar', 'Expand River', 0, len(rivertiles) * 4 * 4 * factr)
+	
+	
+	for til in rivertiles:
+		for f in factr:
+			for g in factr:
+				for newt in [til + Vector2(g, f), til + Vector2(-g, f), til - Vector2(g, f),  til - Vector2(-g, f)]:
+					if check_tile_in_map(newt):
+						# smooth out edge of deeprivtiles by only accepting tiles with neighbors of same type
+						deeprivtiles.append(newt)
+						#rivertiles.append(newt)
+						Map.call_deferred('set_cellv', newt, 0)
+					if progress:
+						WLS.call_deferred('increment_riverwiden_bar')
+	if midexpand:
+		for til in rivertiles:
+			for f in range(factr, factr + mid_factr):
+				for g in range(factr, factr+ mid_factr):
+					for newt in [til + Vector2(g, f), til + Vector2(-g, f), til - Vector2(g, f),  til - Vector2(-g, f)]:
+						if check_tile_in_map(newt) and !(deeprivtiles.has(newt)):
+							# smooth out edge of deeprivtiles by only accepting tiles with neighbors of same type
+							medrivtiles.append(newt)
+							#rivertiles.append(newt)
+							Map.call_deferred('set_cellv', newt, 1)
+						if progress:
+							WLS.call_deferred('increment_riverwiden_bar')
+	if midexpand and shallexpand:
+		for til in rivertiles:
+			for f in range(factr + mid_factr, factr + mid_factr + shall_factr):
+				for g in range(factr + mid_factr, factr + mid_factr + shall_factr):
+					for newt in [til + Vector2(g, f), til + Vector2(-g, f), til - Vector2(g, f),  til - Vector2(-g, f)]:
+						if check_tile_in_map(newt) and !(deeprivtiles.has(newt)) and !(medrivtiles.has(newt)):
+							# smooth out edge of deeprivtiles by only accepting tiles with neighbors of same type
+							shallrivtiles.append(newt)
+							#rivertiles.append(newt)
+							Map.call_deferred('set_cellv', newt, 2)
+						if progress:
+							WLS.call_deferred('increment_riverwiden_bar')
+	
+	# rebuild rivertiles to include all water tiles
+	for til in deeprivtiles:
+		if !(til in rivertiles):
+			rivertiles.append(til)
+	for til in medrivtiles:
+		if !(til in rivertiles):
+			rivertiles.append(til)
+	for til in shallrivtiles:
+		if !(til in rivertiles):
+			rivertiles.append(til)
+
+	print('expand: ' + str(len(deeprivtiles)) + ' new deep river tiles')
+	print('expand: ' + str(len(medrivtiles)) + ' new medium river tiles')
+	print('expand: ' + str(len(shallrivtiles)) + ' new shallow river tiles')
+	if benchmark:
+		print('Time spent on deep river tile generation: ' + str(deeptile_generation_benchmark) + 'ms')
+		print('Time spent on deep river tile validation: ' + str(deeptile_validation_benchmark) + 'ms')
+		print('Time spent on medium river tile generation: ' + str(medtile_generation_benchmark) + 'ms')
+		print('Time spent on medium river tile validation: ' + str(medtile_validation_benchmark) + 'ms')
+		print('Time spent on shallow river tile generation: ' + str(shalltile_generation_benchmark) + 'ms')
+		print('Time spent on shallow river tile validation: ' + str(shalltile_validation_benchmark) + 'ms')
+		print('Time spent on shallow river tile setting: ' + str(shalltile_settile_benchmark) + 'ms')
+
+
+func construct_final_terrain(placeholder):
+	if !placeholder == null:
+		print('arguments not supported')
+	
+	if progress:
+		WLS.call_deferred('setup_finalterrain_bar', 'Finalize Terrain', 0, width * height)
+		
+	var tileval
+	#var overridedtiles = []
+	for x in range(width):
+		for y in range(height):
+			# if it is next to a river, override with green
+			#if self.is_neighboring_a_river(Vector2(x,y)):
+			#	for til in [Vector2(x, y), Vector2(x + 1, y), Vector2(x - 1, y),
+			#				Vector2(x, y - 1), Vector2(x + 1, y - 1), Vector2(x - 1, y - 1),
+			#				Vector2(x, y + 1), Vector2(x + 1, y + 1), Vector2(x - 1, y + 1)]:
+			#		overridedtiles.append(Vector2(x,y))
+			#		if !rivertiles.has(Vector2(x, y)):
+			#			Map.call_deferred('set_cellv', Vector2(x, y), 4)
+			# if it isn't a river or a overridden green tile, set with the initial terrain value
+			if !rivertiles.has(Vector2(x, y)) and !greentiles.has(Vector2(x, y)):
+				tileval = starttils[x][y]
+				Map.call_deferred('set_cellv', Vector2(x, y), tileval)
+			if progress:
+				WLS.call_deferred('increment_finalterrain_bar')
+	
+	if progress:
+		WLS.call_deferred('hack_fill_finalterrain_bar')
 
 func build_world_texture(placeholder):
-	if placeholder != null:
+	if placeholder != null or riverwidth == null:
 		print('attempting to use unexpected argument in create_new_world')
 	Map.clear()
 	
@@ -667,13 +1057,28 @@ func build_world_texture(placeholder):
 		print('end ' + str(end_pt))
 		
 		# then just connect them following the height map
+		
+		# method 1 - solid river path, track with perpendicular vectors to fill in
 		var thread_wander = Thread.new()
-		thread_wander.start(self, "river_wander", [start_pt, end_pt])
+		thread_wander.start(self, "river_wander", [start_pt, end_pt, false])
 		thread_wander.wait_to_finish()
 		
 		var thread_ex = Thread.new()
-		thread_ex.start(self, "expand_river_v2", [riverwidth, true, true])
+		thread_ex.start(self, "expand_river_v3", [riverwidth, true, true])
 		thread_ex.wait_to_finish()
+		
+		# method 2 - appears to be better in general, using the river v2 and simplified path
+		#var thread_wander = Thread.new()
+		#thread_wander.start(self, "river_wander", [start_pt, end_pt, true])
+		#thread_wander.wait_to_finish()
+		#
+		#var thread_ex = Thread.new()
+		#thread_ex.start(self, "expand_river_v4", [riverwidth, true, true])
+		#thread_ex.wait_to_finish()
+		
+		var thread_final = Thread.new()
+		thread_final.start(self, "construct_final_terrain", null)
+		thread_final.wait_to_finish()
 		
 		# get the three biggest concentrations of deepwater
 		var temphgt = []

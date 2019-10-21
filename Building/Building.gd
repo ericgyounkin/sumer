@@ -2,14 +2,16 @@ extends Node2D
 
 var playerhiddencount = 0
 var destroyed = false 
-var Health = 100
+var health = 100
 var enemy_contact = false
 
 
 # need a signal from enemy showing contact... (add something for collision although collision wouldn't always mean attack) 
 
-
- 
+func _ready():
+	# Mike, I put these meaningless calls to these vars just so the debugger doesn't show the 'declared but never used' warning
+	if destroyed == null or health == null or enemy_contact == null:
+		pass
 
 func handle_bodyent(body):
 	if body.is_in_group('players'):

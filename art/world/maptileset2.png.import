@@ -2,15 +2,15 @@
 
 importer="texture"
 type="StreamTexture"
-path="res://.import/maptileset.png-1c673003ac9eaf3f139b8a4934c8ee85.stex"
+path="res://.import/maptileset2.png-74cf4606127d485203e268a42b26effa.stex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://art/world/maptileset.png"
-dest_files=[ "res://.import/maptileset.png-1c673003ac9eaf3f139b8a4934c8ee85.stex" ]
+source_file="res://art/world/maptileset2.png"
+dest_files=[ "res://.import/maptileset2.png-74cf4606127d485203e268a42b26effa.stex" ]
 
 [params]
 

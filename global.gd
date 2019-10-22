@@ -1,10 +1,12 @@
 extends Node
 
 # game parameters
-var width = 200
-var height = 200
+var width = 700
+var height = 700
 var start_zoom_level = 12
-var river_width = width / 50
+var river_width = width / 60
+var spaced_out_factor = 10
+var rdp_epsilon = 4
 
 var start_location = Vector2(0, height * 16)
 

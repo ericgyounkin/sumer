@@ -39,21 +39,21 @@ margin_top = 94.0
 margin_right = 1920.0
 margin_bottom = 137.0
 
-[node name="rivergenbar" parent="bars" instance=ExtResource( 2 )]
+[node name="finalterrainbar" parent="bars" instance=ExtResource( 2 )]
 anchor_right = 0.0
 anchor_bottom = 0.0
 margin_top = 141.0
 margin_right = 1920.0
 margin_bottom = 184.0
 
-[node name="riverwidenbar" parent="bars" instance=ExtResource( 2 )]
+[node name="rivergenbar" parent="bars" instance=ExtResource( 2 )]
 anchor_right = 0.0
 anchor_bottom = 0.0
 margin_top = 188.0
 margin_right = 1920.0
 margin_bottom = 231.0
 
-[node name="finalterrainbar" parent="bars" instance=ExtResource( 2 )]
+[node name="riverwidenbar" parent="bars" instance=ExtResource( 2 )]
 anchor_right = 0.0
 anchor_bottom = 0.0
 margin_top = 235.0

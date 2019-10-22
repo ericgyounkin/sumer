@@ -382,13 +382,13 @@ func rdp_point_line_distance(point, start, end):
 	
 	return pow(pow(ax, 2.0) + pow(ay, 2.0), 0.5)
 
-func rdp(pts, epsilon=3):
+func rdp(pts, epsilon=global.rdp_epsilon):
 	# Ramer-Douglas-Peucker algorithm https://github.com/sebleier/RDP/blob/master/__init__.py
 	"""
     Reduces a series of points to a simplified version that loses detail, but
     maintains the general shape of the series.
     """
-	
+
 	if len(pts) < 2:
 		print('need more than two points!')
 		return
@@ -414,14 +414,18 @@ func rdp(pts, epsilon=3):
 		results = rdp(newpts, epsilon) + rdp(newptstwo, epsilon)
 	else:
 		results = [pts[0], pts[-1]]
+
 	return results
 
-func spaced_out_pts(pts, max_distance=5):
+func spaced_out_pts(pts, max_distance=global.spaced_out_factor):
+	print('setting max distance across path points...{str}'.format({'str':max_distance}))
 	# Just to get all points within the same distance of each other
 	var newpts = []
 	var newpt
 	var dist = 0
 	var direct = Vector2()
+	var max_iterations = 10
+	var cur_iterations = 0
 
 	var ct = 1
 	for pt in pts:
@@ -431,11 +435,17 @@ func spaced_out_pts(pts, max_distance=5):
 		dist = pt.distance_to(pts[ct])
 		direct = pt.direction_to(pts[ct]).normalized()
 		newpt = pt
-		while dist > max_distance:
+		
+		cur_iterations = 0
+		while dist > max_distance or cur_iterations == 10:
 			newpt = newpt + (direct * max_distance).round()
 			newpts.append(newpt)
 			dist = newpt.distance_to(pts[ct])
+			cur_iterations += 1
+			if cur_iterations == 10:
+				print('ERROR: distance never reduced below max_distance in spaced_out_pts')
 		ct += 1
+	print('spacing out complete')
 	return newpts
 
 func river_wander(pts):
@@ -504,6 +514,13 @@ func river_wander(pts):
 		print('simplifying river path...')
 		var newpts = rdp(history)
 		newpts = spaced_out_pts(newpts)
+		# ensure that you get a good border so the river can terminate right along the edge of the map
+		newpts.insert(0, history[2])
+		newpts.insert(0, history[1])
+		newpts.insert(0, history[0])
+		newpts.append(history[history.size()-3])
+		newpts.append(history[history.size()-2])
+		newpts.append(history[history.size()-1])
 		rivertiles = newpts
 		for pts in newpts:
 			Map.call_deferred('set_cellv', pts, 0)
@@ -756,14 +773,10 @@ func expand_river_v3(opts):
 	var shall_factr = mag_inc
 	
 	var deeptile_generation_benchmark = 0
-	var deeptile_validation_benchmark = 0
 	var medtile_generation_benchmark = 0
-	var medtile_validation_benchmark = 0
 	var shalltile_generation_benchmark = 0
-	var shalltile_validation_benchmark = 0
-	var shalltile_settile_benchmark = 0
-	#var starttime = 0
-	#var endtime = 0
+	var starttime = 0
+	var endtime = 0
 	if benchmark:
 		print('running expand_river_v3 with benchmarking enabled...')
 	
@@ -772,6 +785,8 @@ func expand_river_v3(opts):
 	
 	var ct = 0
 	
+	if benchmark:
+		starttime = OS.get_ticks_msec()
 	for til in rivertiles:
 		var deepwaterfactr = factr
 		
@@ -797,7 +812,12 @@ func expand_river_v3(opts):
 			if debug:
 				print('New deep river tiles: ' + str(deeprivtiles))
 		ct += 1
+	if benchmark:
+		endtime = OS.get_ticks_msec()
+		deeptile_generation_benchmark += endtime - starttime
 	
+	if benchmark:
+		starttime = OS.get_ticks_msec()
 	if midexpand:
 		ct = 0
 		for til in rivertiles:
@@ -826,7 +846,12 @@ func expand_river_v3(opts):
 					print('New medium river tiles: ' + str(deeprivtiles))
 			
 			ct += 1
-			
+	if benchmark:
+		endtime = OS.get_ticks_msec()
+		medtile_generation_benchmark += endtime - starttime
+	
+	if benchmark:
+		starttime = OS.get_ticks_msec()
 	if shallexpand and midexpand:
 		ct = 0
 		for til in rivertiles:
@@ -854,6 +879,9 @@ func expand_river_v3(opts):
 				if debug:
 					print('New shall river tiles: ' + str(deeprivtiles))
 			ct += 1
+		if benchmark:
+			endtime = OS.get_ticks_msec()
+			shalltile_generation_benchmark += endtime - starttime
 	
 		ct = 0
 		for til in rivertiles:
@@ -898,12 +926,8 @@ func expand_river_v3(opts):
 	print('expand: ' + str(len(shallrivtiles)) + ' new shallow river tiles')
 	if benchmark:
 		print('Time spent on deep river tile generation: ' + str(deeptile_generation_benchmark) + 'ms')
-		print('Time spent on deep river tile validation: ' + str(deeptile_validation_benchmark) + 'ms')
 		print('Time spent on medium river tile generation: ' + str(medtile_generation_benchmark) + 'ms')
-		print('Time spent on medium river tile validation: ' + str(medtile_validation_benchmark) + 'ms')
 		print('Time spent on shallow river tile generation: ' + str(shalltile_generation_benchmark) + 'ms')
-		print('Time spent on shallow river tile validation: ' + str(shalltile_validation_benchmark) + 'ms')
-		print('Time spent on shallow river tile setting: ' + str(shalltile_settile_benchmark) + 'ms')
 	
 	if progress:
 		WLS.call_deferred('hack_fill_riverwiden_bar')
@@ -912,27 +936,81 @@ func expand_river_v4(opts):
 	var mag_inc = opts[0]
 	var midexpand = opts[1]
 	var shallexpand = opts[2]
+	var greenexpand = opts[2]
 
 	var factr = mag_inc
 	var mid_factr = mag_inc
 	var shall_factr = mag_inc
+	var green_factr = mag_inc
 	
 	var deeptile_generation_benchmark = 0
-	var deeptile_validation_benchmark = 0
 	var medtile_generation_benchmark = 0
-	var medtile_validation_benchmark = 0
 	var shalltile_generation_benchmark = 0
-	var shalltile_validation_benchmark = 0
-	var shalltile_settile_benchmark = 0
-	#var starttime = 0
-	#var endtime = 0
+	var greentile_generation_benchmark = 0
+	var starttime = 0
+	var endtime = 0
 	if benchmark:
-		print('running expand_river_v3 with benchmarking enabled...')
+		print('running expand_river_v4 with benchmarking enabled...')
 	
 	if progress:
 		WLS.call_deferred('setup_riverwiden_bar', 'Expand River', 0, len(rivertiles) * 4 * 4 * factr)
 	
+	if benchmark:
+		starttime = OS.get_ticks_msec()
+	if midexpand and shallexpand:
+		for til in rivertiles:
+			for f in range(0, factr + mid_factr + shall_factr + green_factr):
+				for g in range(0, factr + mid_factr + shall_factr + green_factr):
+					for newt in [til + Vector2(g, f), til + Vector2(-g, f), til - Vector2(g, f),  til - Vector2(-g, f)]:
+						if check_tile_in_map(newt):
+							# smooth out edge of deeprivtiles by only accepting tiles with neighbors of same type
+							greentiles.append(newt)
+							#rivertiles.append(newt)
+							Map.call_deferred('set_cellv', newt, 3)
+						if progress:
+							WLS.call_deferred('increment_riverwiden_bar')
+	if benchmark:
+		endtime = OS.get_ticks_msec()
+		greentile_generation_benchmark += endtime - starttime
 	
+	if benchmark:
+		starttime = OS.get_ticks_msec()
+	if midexpand and shallexpand:
+		for til in rivertiles:
+			for f in range(0, factr + mid_factr + shall_factr):
+				for g in range(0, factr + mid_factr + shall_factr):
+					for newt in [til + Vector2(g, f), til + Vector2(-g, f), til - Vector2(g, f),  til - Vector2(-g, f)]:
+						if check_tile_in_map(newt):
+							# smooth out edge of deeprivtiles by only accepting tiles with neighbors of same type
+							shallrivtiles.append(newt)
+							#rivertiles.append(newt)
+							Map.call_deferred('set_cellv', newt, 2)
+						if progress:
+							WLS.call_deferred('increment_riverwiden_bar')
+	if benchmark:
+		endtime = OS.get_ticks_msec()
+		shalltile_generation_benchmark += endtime - starttime
+	
+	if benchmark:
+		starttime = OS.get_ticks_msec()
+	if midexpand:
+		for til in rivertiles:
+			for f in range(0, factr + mid_factr):
+				for g in range(0, factr+ mid_factr):
+					for newt in [til + Vector2(g, f), til + Vector2(-g, f), til - Vector2(g, f),  til - Vector2(-g, f)]:
+						if check_tile_in_map(newt):
+							# smooth out edge of deeprivtiles by only accepting tiles with neighbors of same type
+							medrivtiles.append(newt)
+							#rivertiles.append(newt)
+							Map.call_deferred('set_cellv', newt, 1)
+						if progress:
+							WLS.call_deferred('increment_riverwiden_bar')
+	if benchmark:
+		endtime = OS.get_ticks_msec()
+		medtile_generation_benchmark += endtime - starttime
+	
+	if benchmark:
+		starttime = OS.get_ticks_msec()
 	for til in rivertiles:
 		for f in factr:
 			for g in factr:
@@ -944,53 +1022,20 @@ func expand_river_v4(opts):
 						Map.call_deferred('set_cellv', newt, 0)
 					if progress:
 						WLS.call_deferred('increment_riverwiden_bar')
-	if midexpand:
-		for til in rivertiles:
-			for f in range(factr, factr + mid_factr):
-				for g in range(factr, factr+ mid_factr):
-					for newt in [til + Vector2(g, f), til + Vector2(-g, f), til - Vector2(g, f),  til - Vector2(-g, f)]:
-						if check_tile_in_map(newt) and !(deeprivtiles.has(newt)):
-							# smooth out edge of deeprivtiles by only accepting tiles with neighbors of same type
-							medrivtiles.append(newt)
-							#rivertiles.append(newt)
-							Map.call_deferred('set_cellv', newt, 1)
-						if progress:
-							WLS.call_deferred('increment_riverwiden_bar')
-	if midexpand and shallexpand:
-		for til in rivertiles:
-			for f in range(factr + mid_factr, factr + mid_factr + shall_factr):
-				for g in range(factr + mid_factr, factr + mid_factr + shall_factr):
-					for newt in [til + Vector2(g, f), til + Vector2(-g, f), til - Vector2(g, f),  til - Vector2(-g, f)]:
-						if check_tile_in_map(newt) and !(deeprivtiles.has(newt)) and !(medrivtiles.has(newt)):
-							# smooth out edge of deeprivtiles by only accepting tiles with neighbors of same type
-							shallrivtiles.append(newt)
-							#rivertiles.append(newt)
-							Map.call_deferred('set_cellv', newt, 2)
-						if progress:
-							WLS.call_deferred('increment_riverwiden_bar')
+	if benchmark:
+		endtime = OS.get_ticks_msec()
+		deeptile_generation_benchmark += endtime - starttime
 	
 	# rebuild rivertiles to include all water tiles
-	for til in deeprivtiles:
-		if !(til in rivertiles):
-			rivertiles.append(til)
-	for til in medrivtiles:
-		if !(til in rivertiles):
-			rivertiles.append(til)
-	for til in shallrivtiles:
-		if !(til in rivertiles):
-			rivertiles.append(til)
+	rivertiles = shallrivtiles
 
 	print('expand: ' + str(len(deeprivtiles)) + ' new deep river tiles')
 	print('expand: ' + str(len(medrivtiles)) + ' new medium river tiles')
 	print('expand: ' + str(len(shallrivtiles)) + ' new shallow river tiles')
 	if benchmark:
 		print('Time spent on deep river tile generation: ' + str(deeptile_generation_benchmark) + 'ms')
-		print('Time spent on deep river tile validation: ' + str(deeptile_validation_benchmark) + 'ms')
 		print('Time spent on medium river tile generation: ' + str(medtile_generation_benchmark) + 'ms')
-		print('Time spent on medium river tile validation: ' + str(medtile_validation_benchmark) + 'ms')
 		print('Time spent on shallow river tile generation: ' + str(shalltile_generation_benchmark) + 'ms')
-		print('Time spent on shallow river tile validation: ' + str(shalltile_validation_benchmark) + 'ms')
-		print('Time spent on shallow river tile setting: ' + str(shalltile_settile_benchmark) + 'ms')
 
 
 func construct_final_terrain(placeholder):
@@ -999,7 +1044,8 @@ func construct_final_terrain(placeholder):
 	
 	if progress:
 		WLS.call_deferred('setup_finalterrain_bar', 'Finalize Terrain', 0, width * height)
-		
+	
+	print('constructing final terrain...')
 	var tileval
 	#var overridedtiles = []
 	for x in range(width):
@@ -1012,10 +1058,11 @@ func construct_final_terrain(placeholder):
 			#		overridedtiles.append(Vector2(x,y))
 			#		if !rivertiles.has(Vector2(x, y)):
 			#			Map.call_deferred('set_cellv', Vector2(x, y), 4)
+			
 			# if it isn't a river or a overridden green tile, set with the initial terrain value
-			if !rivertiles.has(Vector2(x, y)) and !greentiles.has(Vector2(x, y)):
-				tileval = starttils[x][y]
-				Map.call_deferred('set_cellv', Vector2(x, y), tileval)
+			#if !rivertiles.has(Vector2(x, y)) and !greentiles.has(Vector2(x, y)):
+			tileval = starttils[x][y]
+			Map.call_deferred('set_cellv', Vector2(x, y), tileval)
 			if progress:
 				WLS.call_deferred('increment_finalterrain_bar')
 	
@@ -1059,26 +1106,32 @@ func build_world_texture(placeholder):
 		# then just connect them following the height map
 		
 		# method 1 - solid river path, track with perpendicular vectors to fill in
-		var thread_wander = Thread.new()
-		thread_wander.start(self, "river_wander", [start_pt, end_pt, false])
-		thread_wander.wait_to_finish()
-		
-		var thread_ex = Thread.new()
-		thread_ex.start(self, "expand_river_v3", [riverwidth, true, true])
-		thread_ex.wait_to_finish()
-		
-		# method 2 - appears to be better in general, using the river v2 and simplified path
 		#var thread_wander = Thread.new()
-		#thread_wander.start(self, "river_wander", [start_pt, end_pt, true])
+		#thread_wander.start(self, "river_wander", [start_pt, end_pt, false])
 		#thread_wander.wait_to_finish()
-		#
-		#var thread_ex = Thread.new()
-		#thread_ex.start(self, "expand_river_v4", [riverwidth, true, true])
-		#thread_ex.wait_to_finish()
 		
+		#var thread_ex = Thread.new()
+		#thread_ex.start(self, "expand_river_v3", [riverwidth, true, true])
+		#thread_ex.wait_to_finish()
 		var thread_final = Thread.new()
 		thread_final.start(self, "construct_final_terrain", null)
 		thread_final.wait_to_finish()
+		
+		OS.delay_msec(500)
+		
+		# method 2 - appears to be better in general, using the river v2 and simplified path
+		var thread_wander = Thread.new()
+		thread_wander.start(self, "river_wander", [start_pt, end_pt, true])
+		thread_wander.wait_to_finish()
+		
+		OS.delay_msec(500)
+		
+		var thread_ex = Thread.new()
+		thread_ex.start(self, "expand_river_v4", [riverwidth, true, true])
+		thread_ex.wait_to_finish()
+		
+		OS.delay_msec(500)
+		
 		
 		# get the three biggest concentrations of deepwater
 		var temphgt = []
